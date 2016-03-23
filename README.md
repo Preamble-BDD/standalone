@@ -1,1 +1,3 @@
-preamble.ts standalone
+# preamble.ts standalone
+
+Standalone Preamble browser test runner
