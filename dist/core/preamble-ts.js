@@ -430,6 +430,7 @@ var argsChecker = function (matcher, argsLength) {
     }
     return true;
 };
+var addNoteToIt = function (note) { return QueueRunner_1.currentIt.expectations.push(note); };
 // add not api to expect api
 expectationAPI["not"] = negatedExpectationAPI;
 // expect(value)
@@ -461,6 +462,7 @@ exports.registerMatcher = function (matcher) {
             else {
                 note.result = matcher.evalueator(note.expectedValue);
             }
+            addNoteToIt(note);
             console.log("note", note);
         }
         else {
@@ -484,6 +486,7 @@ exports.registerMatcher = function (matcher) {
             else {
                 note.result = !matcher.evalueator(note.expectedValue);
             }
+            addNoteToIt(note);
             console.log("note", note);
         }
         else {
