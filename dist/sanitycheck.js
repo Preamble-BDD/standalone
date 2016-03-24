@@ -188,6 +188,7 @@ describe("Calling toHaveThrown when the actual is an ordinary function", functio
     it("sets the expectation that the actual value, an ordinary function, threw an exception", function () {
         var a;
         var someFn = spyOn(function () { }).and.throw();
+        someFn();
         expect(someFn).toHaveThrown();
     });
 });
@@ -405,12 +406,11 @@ describe("Calling calls.forCall(i).hasArg(n)", function () {
 });
 describe("Calling calls.forCall(i).getError()", function () {
     it("returns the error associated with a specific call to the spy", function () {
-        var a;
         var someObject = {
-            someFn: function (n) { return n + a; }
+            someFn: function () { }
         };
-        spyOn(someObject, "someFn").and.callActual();
-        someObject.someFn(123);
+        spyOn(someObject, "someFn").and.throw();
+        someObject.someFn();
         expect(someObject.someFn.calls.forCall(0).getError()).toBeTruthy();
     });
 });

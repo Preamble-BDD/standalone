@@ -91,7 +91,7 @@
                 return matcherValue;
             },
             evalueator: function (expectedValue, matcherValue) {
-                return expectedValue.calls.wasCalledWith(matcherValue);
+                return expectedValue.calls.wasCalledWith.apply(null, matcherValue);
             },
             negator: true,
             minArgs: 1,
