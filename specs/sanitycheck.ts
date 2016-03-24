@@ -23,17 +23,16 @@ describe(`suites can  be nested`, function() {
 
 describe(`specs can be run asynchronously`, function() {
     let count = 0;
-    beforeEach(function(done) {
+    it(`calling done signals to Preamble that the asynchronous process has completed `, function(done) {
+        // simulate some long running task
         setTimeout(function() {
             count = 100;
-            done();
         }, 1);
-    });
-    it(`calling done signals to Preamble that the asynchronous process has completed `, function(done) {
+        // ... and wait for it to complete and then run the specs
         setTimeout(function() {
             expect(count).toBe(100);
             done();
-        });
+        }, 10);
     });
 });
 
