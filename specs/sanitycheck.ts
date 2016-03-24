@@ -21,17 +21,21 @@ describe(`suites can  be nested`, function() {
     });
 });
 
-// describe(`specs can be run asynchronously`, function() {
-//     let count = 0;
-//     it(`and calling done signals to Preamble that the asynchronous process has completed `, function(done) {
-//         setTimeout(function() {
-//             count = 100;
-//             done(function() {
-//                 expect(count).toEqual(100);
-//             });
-//         }, 1);
-//     });
-// });
+describe(`specs can be run asynchronously`, function() {
+    let count = 0;
+    beforeEach(function(done) {
+        setTimeout(function() {
+            count = 100;
+            done();
+        }, 1);
+    });
+    it(`calling done signals to Preamble that the asynchronous process has completed `, function(done) {
+        setTimeout(function() {
+            expect(count).toBe(100);
+            done();
+        });
+    });
+});
 
 describe(`Using beforeEach to synchronously execute common code before each test`, function() {
     let count = 0;
