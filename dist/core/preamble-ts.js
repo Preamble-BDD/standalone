@@ -331,7 +331,7 @@ var argsChecker = function (matcher, argsLength) {
 expectationAPI["not"] = negatedExpectationAPI;
 exports.expect = function (ev) {
     var expectedValue = ev;
-    if (typeof (ev) === "function" && !ev.hasOwnProperty("_snoopsterMaker")) {
+    if (typeof (ev) === "function" && !ev.hasOwnProperty("_spyMaker")) {
         var spy = spy_1.spyOn(ev).and.callActual();
         expectedValue = spy();
     }
@@ -346,7 +346,7 @@ exports.registerMatcher = function (matcher) {
         }
         note.apiName = matcher.apiName;
         if (argsChecker(matcher, args.length)) {
-            note.matcherValue = matcher.minArgs > 0 && matcher.api.apply(null, args) || note.matcherValue;
+            note.matcherValue = matcher.minArgs > 0 ? matcher.api.apply(null, args) : note.matcherValue;
             note.matcherValue = note.matcherValue && typeof (note.matcherValue) === "function" && note.matcherValue() || note.matcherValue;
             if (matcher.minArgs) {
                 note.result = matcher.evalueator(note.expectedValue, note.matcherValue);
@@ -367,7 +367,7 @@ exports.registerMatcher = function (matcher) {
         }
         note.apiName = "not." + matcher.apiName;
         if (argsChecker(matcher, args.length)) {
-            note.matcherValue = matcher.minArgs > 0 && matcher.api.apply(null, args) || note.matcherValue;
+            note.matcherValue = matcher.minArgs > 0 ? matcher.api.apply(null, args) : note.matcherValue;
             note.matcherValue = note.matcherValue && typeof (note.matcherValue) === "function" && note.matcherValue() || note.matcherValue;
             if (matcher.minArgs) {
                 note.result = !matcher.evalueator(note.expectedValue, note.matcherValue);
@@ -394,12 +394,8 @@ exports.matchersCount = function () { return expectationAPICount; };
 "use strict";
 var deeprecursiveequal_1 = require("../comparators/deeprecursiveequal");
 var Args = (function () {
-    function Args() {
+    function Args(args) {
         var _this = this;
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i - 0] = arguments[_i];
-        }
         this.getLength = function () { return _this.args.length ? _this.args.length : 0; };
         this.hasArg = function (i) { return i >= 0 && _this.getLength() > i ? true : false; };
         this.getArg = function (i) { return _this.hasArg(i) ? _this.args[i] : null; };
@@ -457,7 +453,7 @@ exports.spyOn = function () {
     }
     targetFn = args.length === 0 ? function () { } :
         typeof (args[0]) === "function" ? args[0] : args[0][args[1]];
-    var snoopster = function () {
+    var spy = function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i - 0] = arguments[_i];
@@ -470,102 +466,102 @@ exports.spyOn = function () {
             this.message = message;
             this.name = name;
         }
-        if (snoopster._callActual || snoopster._callFake) {
-            fn = snoopster._callFake || targetFn;
+        if (spy._callActual || spy._callFake) {
+            fn = spy._callFake || targetFn;
             try {
-                returned = fn.apply(snoopster._callWithContext || this, aArgs);
+                returned = fn.apply(spy._callWithContext || this, aArgs);
             }
             catch (er) {
                 error = er;
             }
         }
-        else if (snoopster._throws) {
+        else if (spy._throws) {
             try {
-                throw new ThrowsException(snoopster._throwsMessage, snoopster._throwsName);
+                throw new ThrowsException(spy._throwsMessage, spy._throwsName);
             }
             catch (er) {
                 error = er;
             }
         }
-        if (!snoopster._callActual) {
-            returned = snoopster._returns || returned;
+        if (!spy._callActual) {
+            returned = spy._returns || returned;
         }
-        calls.push(new ACall(snoopster._callWithContext || this, new Args(aArgs), error, returned));
+        calls.push(new ACall(spy._callWithContext || this, new Args(aArgs), error, returned));
         return returned;
     };
-    snoopster._snoopsterMaker = "preamble.snoopster";
-    snoopster._throws = false;
-    snoopster._throwsMessage = "";
-    snoopster._throwsName = "";
-    snoopster.and = {};
-    snoopster.and.reset = function () {
+    spy._spyMaker = "preamble.spy";
+    spy._throws = false;
+    spy._throwsMessage = "";
+    spy._throwsName = "";
+    spy.and = {};
+    spy.and.reset = function () {
         calls = [];
-        snoopster._resetCalls();
-        snoopster._throws = false;
-        snoopster._throwsMessage = "";
-        snoopster._throwsName = "";
-        snoopster._callWithContext = null;
-        snoopster._hasExpectations = false;
-        snoopster._expectations = {};
-        return snoopster;
+        spy._resetCalls();
+        spy._throws = false;
+        spy._throwsMessage = "";
+        spy._throwsName = "";
+        spy._callWithContext = null;
+        spy._hasExpectations = false;
+        spy._expectations = {};
+        return spy;
     };
-    snoopster._callWithContext = null;
-    snoopster.and.callWithContext = function (context) {
+    spy._callWithContext = null;
+    spy.and.callWithContext = function (context) {
         if (!context || typeof (context) !== "object") {
             throw new Error("callWithContext expects to be called with an object");
         }
-        snoopster._callWithContext = context;
-        return snoopster;
+        spy._callWithContext = context;
+        return spy;
     };
-    snoopster.and.throw = function () {
-        snoopster._throws = true;
-        return snoopster;
+    spy.and.throw = function () {
+        spy._throws = true;
+        return spy;
     };
-    snoopster.and.throwWithMessage = function (message) {
+    spy.and.throwWithMessage = function (message) {
         if (typeof (message) !== "string") {
             throw new Error("message expects a string");
         }
-        snoopster._throws = true;
-        snoopster._throwsMessage = message;
-        return snoopster;
+        spy._throws = true;
+        spy._throwsMessage = message;
+        return spy;
     };
-    snoopster.and.throwWithName = function (name) {
+    spy.and.throwWithName = function (name) {
         if (typeof (name) !== "string") {
             throw new Error("name expects a string");
         }
-        snoopster._throws = true;
-        snoopster._throwsName = name;
-        return snoopster;
+        spy._throws = true;
+        spy._throwsName = name;
+        return spy;
     };
-    snoopster.and.return = function (ret) {
-        snoopster._returns = ret;
-        return snoopster;
+    spy.and.return = function (ret) {
+        spy._returns = ret;
+        return spy;
     };
-    snoopster._resetCalls = function () {
-        snoopster._callFake = null;
-        snoopster._callActual = this._callStub = false;
+    spy._resetCalls = function () {
+        spy._callFake = null;
+        spy._callActual = this._callStub = false;
     };
-    snoopster._callFake = null;
-    snoopster.and.callFake = function (fn) {
+    spy._callFake = null;
+    spy.and.callFake = function (fn) {
         if (fn && typeof (fn) !== "function") {
             throw new Error("callFake expects to be called with a function");
         }
-        snoopster._resetCalls();
-        snoopster._callFake = fn;
-        return snoopster;
+        spy._resetCalls();
+        spy._callFake = fn;
+        return spy;
     };
-    snoopster._callActual = false;
-    snoopster.and.callActual = function () {
-        snoopster._resetCalls();
-        snoopster._callActual = true;
-        return snoopster;
+    spy._callActual = false;
+    spy.and.callActual = function () {
+        spy._resetCalls();
+        spy._callActual = true;
+        return spy;
     };
-    snoopster.and.callStub = function () {
-        snoopster._resetCalls();
-        snoopster._callActual = false;
-        return snoopster;
+    spy.and.callStub = function () {
+        spy._resetCalls();
+        spy._callActual = false;
+        return spy;
     };
-    snoopster.calls = {
+    spy.calls = {
         count: function () {
             return calls.length;
         },
@@ -609,55 +605,55 @@ exports.spyOn = function () {
             });
         }
     };
-    snoopster._hasExpectations = false;
-    snoopster._expectations = {};
-    snoopster.and.expect = {
+    spy._hasExpectations = false;
+    spy._expectations = {};
+    spy.and.expect = {
         it: {}
     };
-    snoopster.and.expect.it.toBeCalled = function () {
-        snoopster._hasExpectations = true;
-        snoopster._expectations.toBeCalled = true;
-        return snoopster;
+    spy.and.expect.it.toBeCalled = function () {
+        spy._hasExpectations = true;
+        spy._expectations.toBeCalled = true;
+        return spy;
     };
-    snoopster.and.expect.it.toBeCalledWith = function () {
+    spy.and.expect.it.toBeCalledWith = function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i - 0] = arguments[_i];
         }
-        snoopster._hasExpectations = true;
-        snoopster._expectations.toBeCalledWith = args;
-        return snoopster;
+        spy._hasExpectations = true;
+        spy._expectations.toBeCalledWith = args;
+        return spy;
     };
-    snoopster.and.expect.it.toBeCalledWithContext = function (obj) {
-        snoopster._hasExpectations = true;
-        snoopster._expectations.toBeCalledWithContext = obj;
-        return snoopster;
+    spy.and.expect.it.toBeCalledWithContext = function (obj) {
+        spy._hasExpectations = true;
+        spy._expectations.toBeCalledWithContext = obj;
+        return spy;
     };
-    snoopster.and.expect.it.toReturn = function (value) {
-        snoopster._hasExpectations = true;
-        snoopster._expectations.toReturn = value;
-        return snoopster;
+    spy.and.expect.it.toReturn = function (value) {
+        spy._hasExpectations = true;
+        spy._expectations.toReturn = value;
+        return spy;
     };
-    snoopster.and.expect.it.toThrow = function () {
-        snoopster._hasExpectations = true;
-        snoopster._expectations.toThrow = true;
-        return snoopster;
+    spy.and.expect.it.toThrow = function () {
+        spy._hasExpectations = true;
+        spy._expectations.toThrow = true;
+        return spy;
     };
-    snoopster.and.expect.it.toThrowWithName = function (name) {
-        snoopster._hasExpectations = true;
-        snoopster._expectations.toThrowWithName = name;
-        return snoopster;
+    spy.and.expect.it.toThrowWithName = function (name) {
+        spy._hasExpectations = true;
+        spy._expectations.toThrowWithName = name;
+        return spy;
     };
-    snoopster.and.expect.it.toThrowWithMessage = function (message) {
-        snoopster._hasExpectations = true;
-        snoopster._expectations.toThrowWithMessage = message;
-        return snoopster;
+    spy.and.expect.it.toThrowWithMessage = function (message) {
+        spy._hasExpectations = true;
+        spy._expectations.toThrowWithMessage = message;
+        return spy;
     };
     if (args.length && typeof (args[0]) !== "function" &&
         typeof (args[0]) === "object") {
-        args[0][args[1]] = snoopster;
+        args[0][args[1]] = spy;
     }
-    return snoopster;
+    return spy;
 };
 exports.spyOn.x = function (argObject, argPropertyNames) {
     var i, len;

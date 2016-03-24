@@ -74,7 +74,9 @@
         registerMatcher({
             apiName: "toHaveBeenCalled",
             api: function () { },
-            evalueator: function (expectedValue) { return expectedValue.calls.count() > 0; },
+            evalueator: function (expectedValue) {
+                return expectedValue.calls.count() > 0;
+            },
             negator: true,
             minArgs: 0,
             maxArgs: 0
@@ -88,11 +90,7 @@
                 }
                 return matcherValue;
             },
-            evalueator: function (expectedValue) {
-                var matcherValue = [];
-                for (var _i = 1; _i < arguments.length; _i++) {
-                    matcherValue[_i - 1] = arguments[_i];
-                }
+            evalueator: function (expectedValue, matcherValue) {
                 return expectedValue.calls.wasCalledWith(matcherValue);
             },
             negator: true,
