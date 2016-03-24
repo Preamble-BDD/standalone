@@ -520,3 +520,52 @@ describe("Calling and.callFake(fn)", function () {
         expect(someObject.someFn).toHaveReturnedValue(true);
     });
 });
+window.preamble.registerMatcher({
+    apiName: "toBeAString",
+    api: function (matcherValue) { },
+    evalueator: function (expectedValue) { return typeof expectedValue === "string"; },
+    negator: true,
+    minArgs: 0,
+    maxArgs: 0
+});
+window.preamble.registerMatcher({
+    apiName: "toBeANumber",
+    api: function (matcherValue) { },
+    evalueator: function (expectedValue) { return typeof expectedValue === "number"; },
+    negator: true,
+    minArgs: 0,
+    maxArgs: 0
+});
+window.preamble.registerMatcher({
+    apiName: "toBeInstanceOf",
+    api: function (matcherValue) { return matcherValue; },
+    evalueator: function (expectedValue, matcherValue) { return expectedValue instanceof matcherValue; },
+    negator: true,
+    minArgs: 1,
+    maxArgs: 1
+});
+describe("Custome matchers", function () {
+    it("toBeAString can be loaded dynamically and used just like a built in matcher", function () {
+        expect("I am a string").toBeAString();
+        expect(999).not.toBeAString();
+    });
+    it("toBeANumber can be loaded dynamically and used just like a built in matcher", function () {
+        expect(999).toBeANumber();
+        expect("I am a string").not.toBeANumber();
+    });
+    it("toBeInstanceOf can be loaded dynamically and used just like a built in matcher", function () {
+        var SomeThing = (function () {
+            function SomeThing() {
+            }
+            return SomeThing;
+        }());
+        var SomeOtherThing = (function () {
+            function SomeOtherThing() {
+            }
+            return SomeOtherThing;
+        }());
+        var someThing = new SomeThing();
+        expect(someThing).toBeInstanceOf(SomeThing);
+        expect(someThing).not.toBeInstanceOf(SomeOtherThing);
+    });
+});
