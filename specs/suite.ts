@@ -141,7 +141,7 @@ describe(`Sharing values between setups, specs and teardowns using "this"`, func
 window.preamble.registerMatcher({
     apiName: "toBeAString",
     api: (matcherValue: any): void => { },
-    evalueator: (expectedValue): boolean => typeof expectedValue === "string",
+    evaluator: (expectedValue): boolean => typeof expectedValue === "string",
     negator: true,
     minArgs: 0,
     maxArgs: 0
@@ -149,7 +149,7 @@ window.preamble.registerMatcher({
 window.preamble.registerMatcher({
     apiName: "toBeANumber",
     api: (matcherValue: any): void => { },
-    evalueator: (expectedValue): boolean => typeof expectedValue === "number",
+    evaluator: (expectedValue): boolean => typeof expectedValue === "number",
     negator: true,
     minArgs: 0,
     maxArgs: 0
@@ -157,7 +157,7 @@ window.preamble.registerMatcher({
 window.preamble.registerMatcher({
     apiName: "toBeInstanceOf",
     api: (matcherValue: any): any => matcherValue,
-    evalueator: (expectedValue, matcherValue): boolean => expectedValue instanceof matcherValue,
+    evaluator: (expectedValue, matcherValue): boolean => expectedValue instanceof matcherValue,
     negator: true,
     minArgs: 1,
     maxArgs: 1

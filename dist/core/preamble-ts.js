@@ -457,10 +457,10 @@ exports.registerMatcher = function (matcher) {
             // if a callback was returned then call it and use what it returns for the matcher value
             note.matcherValue = note.matcherValue && typeof (note.matcherValue) === "function" && note.matcherValue() || note.matcherValue;
             if (matcher.minArgs) {
-                note.result = matcher.evalueator(note.expectedValue, note.matcherValue);
+                note.result = matcher.evaluator(note.expectedValue, note.matcherValue);
             }
             else {
-                note.result = matcher.evalueator(note.expectedValue);
+                note.result = matcher.evaluator(note.expectedValue);
             }
             addNoteToIt(note);
             console.log("note", note);
@@ -481,10 +481,10 @@ exports.registerMatcher = function (matcher) {
             // if a callback was returned then call it and use what it returns for the matcher value
             note.matcherValue = note.matcherValue && typeof (note.matcherValue) === "function" && note.matcherValue() || note.matcherValue;
             if (matcher.minArgs) {
-                note.result = !matcher.evalueator(note.expectedValue, note.matcherValue);
+                note.result = !matcher.evaluator(note.expectedValue, note.matcherValue);
             }
             else {
-                note.result = !matcher.evalueator(note.expectedValue);
+                note.result = !matcher.evaluator(note.expectedValue);
             }
             addNoteToIt(note);
             console.log("note", note);
@@ -505,6 +505,7 @@ exports.matchersCount = function () { return expectationAPICount; };
 },{"../queue/QueueRunner":19,"./spy/spy":13}],13:[function(require,module,exports){
 "use strict";
 var deeprecursiveequal_1 = require("../comparators/deeprecursiveequal");
+var QueueRunner_1 = require("../../queue/QueueRunner");
 // args API
 var Args = (function () {
     function Args(args) {
@@ -765,7 +766,7 @@ exports.spyOn = function () {
     };
     spy.and.expect.it.toReturn = function (value) {
         spy._hasExpectations = true;
-        spy._expectations.toReturn = value;
+        spy._expectations.toReturnValue = value;
         return spy;
     };
     spy.and.expect.it.toThrow = function () {
@@ -783,46 +784,47 @@ exports.spyOn = function () {
         spy._expectations.toThrowWithMessage = message;
         return spy;
     };
-    // spy.validate = function() {
-    //     let notations = require("./expectations/notations.js");
-    //
-    //     //  if(!spy._hasExpectations){
-    //     //      throwException(""validate" expects a spy with predefined expectation and found none");
-    //     //  }
-    //     // Expect the mock to have expectations
-    //     notations.noteExpectation(spy);
-    //     notations.noteMockHasExpectations();
-    //     if (spy._expectations.toBeCalled) {
-    //         notations.noteExpectation(spy);
-    //         notations.noteToHaveBeenCalled();
-    //     }
-    //     if (spy._expectations.toBeCalledWith) {
-    //         notations.noteExpectation(spy);
-    //         notations.noteToHaveBeenCalledWith.apply(null,
-    //             argsToArray(spy._expectations.toBeCalledWith));
-    //     }
-    //     if (spy._expectations.toBeCalledWithContext) {
-    //         notations.noteExpectation(spy);
-    //         notations.noteToHaveBeenCalledWithContext(
-    //             spy._expectations.toBeCalledWithContext);
-    //     }
-    //     if (spy._expectations.toReturn) {
-    //         notations.noteExpectation(spy);
-    //         notations.noteToHaveReturned(spy._expectations.toReturn);
-    //     }
-    //     if (spy._expectations.toThrow) {
-    //         notations.noteExpectation(spy);
-    //         notations.noteToHaveThrown();
-    //     }
-    //     if (spy._expectations.toThrowWithName) {
-    //         notations.noteExpectation(spy);
-    //         notations.noteToHaveThrownWithName(spy._expectations.toThrowWithName);
-    //     }
-    //     if (spy._expectations.toThrowWithMessage) {
-    //         notations.noteExpectation(spy);
-    //         notations.noteToHaveThrownWithMessage(spy._expectations.toThrowWithMessage);
-    //     }
-    // };
+    spy.validate = function () {
+        var noteMockExpectation = function (apiName, evaluator, matcherValue) {
+            var note = {
+                it: QueueRunner_1.currentIt,
+                apiName: apiName,
+                expectedValue: spy,
+                matcherValue: matcherValue || null,
+                result: null,
+                exception: null
+            };
+            try {
+                note.result = evaluator();
+            }
+            catch (error) {
+                note.exception = error;
+            }
+            QueueRunner_1.currentIt.expectations.push(note);
+            console.log("note", note);
+        };
+        if (spy._hasExpectations && spy._expectations.toBeCalled) {
+            noteMockExpectation("mock.toBeCalled", function () { return spy.calls.count() > 0; });
+        }
+        if (spy._hasExpectations && spy._expectations.toBeCalledWith) {
+            noteMockExpectation("mock.toBeCalledWith", function () { return spy.calls.wasCalledWith.apply(null, spy._expectations.toBeCalledWith); }, spy._expectations.toBeCalledWith);
+        }
+        if (spy._hasExpectations && spy._expectations.toBeCalledWithContext) {
+            noteMockExpectation("mock.toBeCalledWithContext", function () { return spy.calls.wasCalledWithContext(spy._expectations.toBeCalledWithContext); }, spy._expectations.toBeCalledWith);
+        }
+        if (spy._hasExpectations && spy._expectations.toReturnValue) {
+            noteMockExpectation("mock.toReturnValue", function () { return spy.calls.returned(spy._expectations.toReturnValue); }, spy._expectations.toReturnValue);
+        }
+        if (spy._hasExpectations && spy._expectations.toThrow) {
+            noteMockExpectation("mock.toThrow", function () { return spy.calls.threw(); });
+        }
+        if (spy._hasExpectations && spy._expectations.toThrowWithName) {
+            noteMockExpectation("mock.toThrowWithName", function () { return spy.calls.threwWithName(spy._expectations.toThrowWithName); }, spy._expectations.toThrowWithName);
+        }
+        if (spy._hasExpectations && spy._expectations.toThrowWithMessage) {
+            noteMockExpectation("mock.toThrowWithMessage", function () { return spy.calls.threwWithMessage(spy._expectations.toThrowWithMessage); }, spy._expectations.toThrowWithMessage);
+        }
+    };
     if (args.length && typeof (args[0]) !== "function" &&
         typeof (args[0]) === "object") {
         args[0][args[1]] = spy;
@@ -870,7 +872,7 @@ exports.spyOn.x = function (argObject, argPropertyNames) {
     });
 };
 
-},{"../comparators/deeprecursiveequal":11}],14:[function(require,module,exports){
+},{"../../queue/QueueRunner":19,"../comparators/deeprecursiveequal":11}],14:[function(require,module,exports){
 "use strict";
 var AfterEach = (function () {
     function AfterEach(parent, id, callback, timeoutInterval) {

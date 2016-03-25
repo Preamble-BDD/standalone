@@ -1,7 +1,7 @@
 declare interface IMatcher {
     apiName: string;
     api(...args): any;
-    evalueator(expectedValue: any, matcherValue?: any): boolean;
+    evaluator(expectedValue: any, matcherValue?: any): boolean;
     negator?: boolean;
     minArgs: number;
     maxArgs: number;
@@ -67,7 +67,7 @@ declare interface StaticSpy {
 
 declare interface It {
     toBeCalled: () => Spy;
-    toBeCalledWith: () => Spy;
+    toBeCalledWith: (...args) => Spy;
     toBeCalledWithContext: (context: {}) => Spy;
     toReturn: (value: any) => Spy;
     toThrow: () => Spy;
@@ -126,6 +126,7 @@ declare interface Spy extends StaticSpy {
     _hasExpectations: boolean;
     and: And;
     calls: Calls;
+    validate: () => void;
     _expectations: Expectations;
     _resetCalls: () => void;
 }

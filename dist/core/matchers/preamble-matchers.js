@@ -4,7 +4,7 @@
         registerMatcher({
             apiName: "toBeTrue",
             api: function () { },
-            evalueator: function (expectedValue) { return expectedValue === true; },
+            evaluator: function (expectedValue) { return expectedValue === true; },
             negator: true,
             minArgs: 0,
             maxArgs: 0
@@ -12,7 +12,7 @@
         registerMatcher({
             apiName: "toBeTruthy",
             api: function () { },
-            evalueator: function (expectedValue) { return !!expectedValue; },
+            evaluator: function (expectedValue) { return !!expectedValue; },
             negator: true,
             minArgs: 0,
             maxArgs: 0
@@ -20,7 +20,7 @@
         registerMatcher({
             apiName: "toBe",
             api: function (matcherValue) { return matcherValue; },
-            evalueator: function (expectedValue, matcherValue) {
+            evaluator: function (expectedValue, matcherValue) {
                 return expectedValue === matcherValue;
             },
             negator: true,
@@ -30,7 +30,7 @@
         registerMatcher({
             apiName: "toEqual",
             api: function (matcherValue) { return matcherValue; },
-            evalueator: function (expectedValue, matcherValue) {
+            evaluator: function (expectedValue, matcherValue) {
                 return comparators.deepRecursiveCompare(expectedValue, matcherValue);
             },
             negator: true,
@@ -40,7 +40,7 @@
         registerMatcher({
             apiName: "toBeDefined",
             api: function () { },
-            evalueator: function (expectedValue) { return expectedValue !== undefined; },
+            evaluator: function (expectedValue) { return expectedValue !== undefined; },
             negator: true,
             minArgs: 0,
             maxArgs: 0
@@ -48,7 +48,7 @@
         registerMatcher({
             apiName: "toBeUndefined",
             api: function () { },
-            evalueator: function (expectedValue) { return expectedValue === undefined; },
+            evaluator: function (expectedValue) { return expectedValue === undefined; },
             negator: true,
             minArgs: 0,
             maxArgs: 0
@@ -56,7 +56,7 @@
         registerMatcher({
             apiName: "toBeNull",
             api: function () { },
-            evalueator: function (expectedValue) { return expectedValue === null; },
+            evaluator: function (expectedValue) { return expectedValue === null; },
             negator: true,
             minArgs: 0,
             maxArgs: 0
@@ -64,7 +64,7 @@
         registerMatcher({
             apiName: "toMatch",
             api: function (matcherValue) { return matcherValue; },
-            evalueator: function (expectedValue, matcherValue) {
+            evaluator: function (expectedValue, matcherValue) {
                 return matcherValue.exec(expectedValue) !== null;
             },
             negator: true,
@@ -74,7 +74,7 @@
         registerMatcher({
             apiName: "toHaveBeenCalled",
             api: function () { },
-            evalueator: function (expectedValue) {
+            evaluator: function (expectedValue) {
                 return expectedValue.calls.count() > 0;
             },
             negator: true,
@@ -90,7 +90,7 @@
                 }
                 return matcherValue;
             },
-            evalueator: function (expectedValue, matcherValue) {
+            evaluator: function (expectedValue, matcherValue) {
                 return expectedValue.calls.wasCalledWith.apply(null, matcherValue);
             },
             negator: true,
@@ -100,7 +100,7 @@
         registerMatcher({
             apiName: "toHaveBeenCalledWithContext",
             api: function (matcherValue) { return matcherValue; },
-            evalueator: function (expectedValue, matcherValue) {
+            evaluator: function (expectedValue, matcherValue) {
                 return expectedValue.calls.wasCalledWithContext(matcherValue);
             },
             negator: true,
@@ -110,7 +110,7 @@
         registerMatcher({
             apiName: "toHaveReturnedValue",
             api: function (matcherValue) { return matcherValue; },
-            evalueator: function (expectedValue, matcherValue) {
+            evaluator: function (expectedValue, matcherValue) {
                 return expectedValue.calls.returned(matcherValue);
             },
             negator: true,
@@ -120,7 +120,7 @@
         registerMatcher({
             apiName: "toHaveThrown",
             api: function () { },
-            evalueator: function (expectedValue) {
+            evaluator: function (expectedValue) {
                 return expectedValue.calls.threw();
             },
             negator: true,
@@ -130,7 +130,7 @@
         registerMatcher({
             apiName: "toHaveThrownWithMessage",
             api: function (matcherValue) { return matcherValue; },
-            evalueator: function (expectedValue, matcherValue) {
+            evaluator: function (expectedValue, matcherValue) {
                 return expectedValue.calls.threwWithMessage(matcherValue);
             },
             negator: true,
@@ -140,7 +140,7 @@
         registerMatcher({
             apiName: "toHaveThrownWithName",
             api: function (matcherValue) { return matcherValue; },
-            evalueator: function (expectedValue, matcherValue) {
+            evaluator: function (expectedValue, matcherValue) {
                 return expectedValue.calls.threwWithName(matcherValue);
             },
             negator: true,
@@ -150,7 +150,7 @@
         registerMatcher({
             apiName: "toHaveThrownWithName",
             api: function (matcherValue) { return matcherValue; },
-            evalueator: function (expectedValue, matcherValue) {
+            evaluator: function (expectedValue, matcherValue) {
                 return expectedValue.calls.threwWithName(matcherValue);
             },
             negator: true,

@@ -535,7 +535,7 @@ describe("Calling and.callFake(fn)", function () {
 window.preamble.registerMatcher({
     apiName: "toBeAString",
     api: function (matcherValue) { },
-    evalueator: function (expectedValue) { return typeof expectedValue === "string"; },
+    evaluator: function (expectedValue) { return typeof expectedValue === "string"; },
     negator: true,
     minArgs: 0,
     maxArgs: 0
@@ -543,7 +543,7 @@ window.preamble.registerMatcher({
 window.preamble.registerMatcher({
     apiName: "toBeANumber",
     api: function (matcherValue) { },
-    evalueator: function (expectedValue) { return typeof expectedValue === "number"; },
+    evaluator: function (expectedValue) { return typeof expectedValue === "number"; },
     negator: true,
     minArgs: 0,
     maxArgs: 0
@@ -551,7 +551,7 @@ window.preamble.registerMatcher({
 window.preamble.registerMatcher({
     apiName: "toBeInstanceOf",
     api: function (matcherValue) { return matcherValue; },
-    evalueator: function (expectedValue, matcherValue) { return expectedValue instanceof matcherValue; },
+    evaluator: function (expectedValue, matcherValue) { return expectedValue instanceof matcherValue; },
     negator: true,
     minArgs: 1,
     maxArgs: 1
@@ -579,5 +579,79 @@ describe("Custome matchers", function () {
         var someThing = new SomeThing();
         expect(someThing).toBeInstanceOf(SomeThing);
         expect(someThing).not.toBeInstanceOf(SomeOtherThing);
+    });
+});
+describe("Calling and.expect.it.toBeCalled()", function () {
+    it("sets the expectation that the mock must be called", function () {
+        var mock = spyOn().and.expect.it.toBeCalled();
+        mock();
+        mock.validate();
+    });
+});
+describe("Calling and.expect.it.toBeCalledWith(\"abc\", 123, {zip: \"55555\"})", function () {
+    it("sets the expectation that the mock must be called with \"abc\", 123, {zip: \"55555\"}", function () {
+        var mock = spyOn().and.expect.it.toBeCalledWith("abc", 123, { zip: "55555" });
+        mock("abc", 123, { zip: "55555" });
+        mock.validate();
+    });
+});
+describe("Calling and.expect.it.toBeCalledWithContext(object)", function () {
+    it("sets the expectation that the mock must be called with its context set to object", function () {
+        var someObject = {
+            someFn: function () { return this.sayHi(); },
+            sayHi: function () { return "Hello"; }
+        }, someOtherObject = {
+            sayHi: function () { return "Hello World!"; }
+        };
+        spyOn(someObject, "someFn").
+            and.callActual().
+            and.expect.it.toBeCalledWithContext(someOtherObject).
+            and.expect.it.toReturn("Hello World!");
+        someObject.someFn.call(someOtherObject);
+        someObject.someFn.validate();
+    });
+});
+describe("Calling and.expect.it.toReturn(value)", function () {
+    it("sets the expectation that the mock must return value", function () {
+        var someObject = {
+            someFn: function () { return { fName: "Tom", lName: "Sawyer" }; }
+        };
+        spyOn(someObject, "someFn").and.callActual().
+            and.expect.it.toReturn({ fName: "Tom", lName: "Sawyer" });
+        someObject.someFn();
+        someObject.someFn.validate();
+    });
+});
+describe("Calling and.expect.it.toThrow()", function () {
+    it("sets the expectation that the mock must throw an exception when called", function () {
+        var someObject = {
+            someFn: function () { throw new Error("Whoops!"); }
+        };
+        spyOn(someObject, "someFn").and.callActual().
+            and.expect.it.toThrow();
+        someObject.someFn();
+        someObject.someFn.validate();
+    });
+});
+describe("Calling and.expect.it.toThrowWithName(name)", function () {
+    it("sets the expectation that the mock must throw an exception with name when called", function () {
+        var someObject = {
+            someFn: function () { }
+        };
+        spyOn(someObject, "someFn").and.throwWithName("Error").
+            and.expect.it.toThrowWithName("Error");
+        someObject.someFn();
+        someObject.someFn.validate();
+    });
+});
+describe("Calling and.expect.it.toThrowWithMessage(\"Whoops!\")", function () {
+    it("sets the expectation that the mock must throw an exception with message when called", function () {
+        var someObject = {
+            someFn: function () { }
+        };
+        spyOn(someObject, "someFn").and.throwWithMessage("Whoops!").
+            and.expect.it.toThrowWithMessage("Whoops!");
+        someObject.someFn();
+        someObject.someFn.validate();
     });
 });

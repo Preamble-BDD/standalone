@@ -83,7 +83,7 @@ describe("Sharing values between setups, specs and teardowns using \"this\"", fu
 window.preamble.registerMatcher({
     apiName: "toBeAString",
     api: function (matcherValue) { },
-    evalueator: function (expectedValue) { return typeof expectedValue === "string"; },
+    evaluator: function (expectedValue) { return typeof expectedValue === "string"; },
     negator: true,
     minArgs: 0,
     maxArgs: 0
@@ -91,7 +91,7 @@ window.preamble.registerMatcher({
 window.preamble.registerMatcher({
     apiName: "toBeANumber",
     api: function (matcherValue) { },
-    evalueator: function (expectedValue) { return typeof expectedValue === "number"; },
+    evaluator: function (expectedValue) { return typeof expectedValue === "number"; },
     negator: true,
     minArgs: 0,
     maxArgs: 0
@@ -99,7 +99,7 @@ window.preamble.registerMatcher({
 window.preamble.registerMatcher({
     apiName: "toBeInstanceOf",
     api: function (matcherValue) { return matcherValue; },
-    evalueator: function (expectedValue, matcherValue) { return expectedValue instanceof matcherValue; },
+    evaluator: function (expectedValue, matcherValue) { return expectedValue instanceof matcherValue; },
     negator: true,
     minArgs: 1,
     maxArgs: 1
