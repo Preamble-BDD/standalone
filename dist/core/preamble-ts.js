@@ -445,58 +445,49 @@ exports.expect = function (ev) {
     return expectationAPI;
 };
 exports.registerMatcher = function (matcher) {
-    var proxy = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i - 0] = arguments[_i];
-        }
-        note.apiName = matcher.apiName;
-        if (argsChecker(matcher, args.length)) {
-            // don't call matcher.api if it doesn't return a value (e.g. toBeTrue)
-            note.matcherValue = matcher.minArgs > 0 ? matcher.api.apply(null, args) : note.matcherValue;
-            // if a callback was returned then call it and use what it returns for the matcher value
-            note.matcherValue = note.matcherValue && typeof (note.matcherValue) === "function" && note.matcherValue() || note.matcherValue;
-            if (matcher.minArgs) {
-                note.result = matcher.evaluator(note.expectedValue, note.matcherValue);
+    var proxy = function (not) {
+        return function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i - 0] = arguments[_i];
+            }
+            note.apiName = not ? "not." + matcher.apiName : matcher.apiName;
+            if (argsChecker(matcher, args.length)) {
+                // don't call matcher.api if it doesn't return a value (e.g. toBeTrue)
+                note.matcherValue = matcher.minArgs > 0 ? matcher.api.apply(null, args) : note.matcherValue;
+                // if a callback was returned then call it and use what it returns for the matcher value
+                note.matcherValue = note.matcherValue && typeof (note.matcherValue) === "function" && note.matcherValue() || note.matcherValue;
+                if (not) {
+                    if (matcher.minArgs) {
+                        note.result = !matcher.evaluator(note.expectedValue, note.matcherValue);
+                    }
+                    else {
+                        note.result = !matcher.evaluator(note.expectedValue);
+                    }
+                }
+                else {
+                    if (matcher.minArgs) {
+                        note.result = matcher.evaluator(note.expectedValue, note.matcherValue);
+                    }
+                    else {
+                        note.result = matcher.evaluator(note.expectedValue);
+                    }
+                }
+                addNoteToIt(note);
+                // set It's and its parent Describe's passed property to false when expectation fails
+                QueueRunner_1.currentIt.passed = !note.result ? note.result : QueueRunner_1.currentIt.passed;
+                QueueRunner_1.currentIt.parent.passed = !note.result ? note.result : QueueRunner_1.currentIt.parent.passed;
+                console.log("note", note);
             }
             else {
-                note.result = matcher.evaluator(note.expectedValue);
+                console.log("note", note);
             }
-            addNoteToIt(note);
-            console.log("note", note);
-        }
-        else {
-            console.log("note", note);
-        }
-    };
-    var proxyNot = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i - 0] = arguments[_i];
-        }
-        note.apiName = "not." + matcher.apiName;
-        if (argsChecker(matcher, args.length)) {
-            // don't call matcher.api if it doesn't return a value (e.g. toBeTrue)
-            note.matcherValue = matcher.minArgs > 0 ? matcher.api.apply(null, args) : note.matcherValue;
-            // if a callback was returned then call it and use what it returns for the matcher value
-            note.matcherValue = note.matcherValue && typeof (note.matcherValue) === "function" && note.matcherValue() || note.matcherValue;
-            if (matcher.minArgs) {
-                note.result = !matcher.evaluator(note.expectedValue, note.matcherValue);
-            }
-            else {
-                note.result = !matcher.evaluator(note.expectedValue);
-            }
-            addNoteToIt(note);
-            console.log("note", note);
-        }
-        else {
-            console.log("note", note);
-        }
+        };
     };
     console.log("Registering matcher", matcher.apiName);
-    expectationAPI[matcher.apiName] = proxy;
+    expectationAPI[matcher.apiName] = proxy(false);
     if (matcher.negator) {
-        negatedExpectationAPI[matcher.apiName] = proxyNot;
+        negatedExpectationAPI[matcher.apiName] = proxy(true);
     }
     expectationAPICount++;
 };
@@ -912,6 +903,7 @@ var Describe = (function () {
         this.beforeEach = null;
         this.afterEach = null;
         this.isA = "Describe";
+        this.passed = true;
     }
     return Describe;
 }());
@@ -931,6 +923,7 @@ var It = (function () {
         this.expectations = [];
         this.scope = {};
         this.isA = "It";
+        this.passed = true;
     }
     return It;
 }());
