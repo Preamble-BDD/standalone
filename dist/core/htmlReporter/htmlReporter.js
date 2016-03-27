@@ -1,4 +1,6 @@
 "use strict";
+var testContainer = "preamble-test-container";
+var configOptions;
 var HtmlReporter = (function () {
     function HtmlReporter() {
         this.onErrorFnPrev = window.onerror;
@@ -14,9 +16,27 @@ var HtmlReporter = (function () {
         }
         return false;
     };
-    HtmlReporter.prototype.report = function (data) { };
+    HtmlReporter.prototype.createElement = function (tagName) {
+        return document.createElement(tagName);
+    };
+    HtmlReporter.prototype.createTextNode = function (text) {
+        return document.createTextNode(text);
+    };
+    HtmlReporter.prototype.getTestContainer = function () {
+        return document.getElementById(testContainer);
+    };
+    HtmlReporter.prototype.getUiTestContainerEl = function () {
+        return document.getElementById(configOptions.uiTestContainerId);
+    };
+    HtmlReporter.prototype.reportBegin = function (confOpts) {
+        configOptions = confOpts;
+    };
+    HtmlReporter.prototype.reportSummary = function (summaryInfo) {
+        var summary = "<div id=\"summary\">\n        <span>" + summaryInfo.name + ": </span>\n        <span style=\"color: blue;\">" + summaryInfo.totIts + "</span><b> specs</b>,\n        <span style=\"color: blue;\">" + summaryInfo.totFailedIts + "</span><b> failures</b>,\n        <span style=\"color: blue;\">" + summaryInfo.totExcIts + "</span><b> excluded</b>";
+        this.getTestContainer().innerHTML = summary;
+    };
     return HtmlReporter;
 }());
 window["preamble"] = window["preamble"] || {};
-window["preamble"]["reporter"] = { reporter: new HtmlReporter() };
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaHRtbFJlcG9ydGVyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vc3JjL2NvcmUvaHRtbFJlcG9ydGVyL2h0bWxSZXBvcnRlci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiO0FBRUE7SUFFSTtRQUVJLElBQUksQ0FBQyxhQUFhLEdBQUcsTUFBTSxDQUFDLE9BQU8sQ0FBQztRQUVwQyxNQUFNLENBQUMsT0FBTyxHQUFHLElBQUksQ0FBQyxPQUFPLENBQUM7SUFDbEMsQ0FBQztJQUNELDhCQUFPLEdBQVAsVUFBUSxZQUFZLEVBQUUsR0FBRyxFQUFFLE1BQU07UUFDN0IsSUFBSSxHQUFHLEdBQVksS0FBSyxDQUFDO1FBQ3pCLE9BQU8sQ0FBQyxHQUFHLENBQUMsOEJBQThCLENBQUMsQ0FBQztRQUU1QyxFQUFFLENBQUMsQ0FBQyxJQUFJLENBQUMsYUFBYSxDQUFDLENBQUMsQ0FBQztZQUNyQixHQUFHLEdBQUcsSUFBSSxDQUFDLGFBQWEsQ0FBQyxZQUFZLEVBQUUsR0FBRyxFQUFFLE1BQU0sQ0FBQyxDQUFDO1FBQ3hELENBQUM7UUFFRCxFQUFFLENBQUMsQ0FBQyxHQUFHLEtBQUssSUFBSSxDQUFDLENBQUMsQ0FBQztRQUVuQixDQUFDO1FBQ0QsTUFBTSxDQUFDLEtBQUssQ0FBQztJQUVqQixDQUFDO0lBQ0QsNkJBQU0sR0FBTixVQUFPLElBQVMsSUFBVSxDQUFDO0lBQy9CLG1CQUFDO0FBQUQsQ0FBQyxBQXZCRCxJQXVCQztBQUVELE1BQU0sQ0FBQyxVQUFVLENBQUMsR0FBRyxNQUFNLENBQUMsVUFBVSxDQUFDLElBQUksRUFBRSxDQUFDO0FBQzlDLE1BQU0sQ0FBQyxVQUFVLENBQUMsQ0FBQyxVQUFVLENBQUMsR0FBRyxFQUFFLFFBQVEsRUFBRSxJQUFJLFlBQVksRUFBRSxFQUFFLENBQUMifQ==
+window["preamble"]["reporters"] = window["preamble"]["reporters"] || [];
+window["preamble"]["reporters"].push(new HtmlReporter());

@@ -83,6 +83,8 @@ function describe(label, callback) {
     // }
     // push Describe onto the queue
     QueueManager_1.QueueManager.queue.push(_describe);
+    // increment totDescribes count
+    QueueManager_1.QueueManager.totDescribes++;
     // push Describe onto the callstack
     callstack_1.callStack.pushDescribe(_describe);
     // call callback to register the beforeEach, afterEach, it and describe calls
@@ -124,7 +126,7 @@ function it(label, callback, timeoutInterval) {
     _it = new It_1.It(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), label, callback, callstack_1.callStack.getTopOfStack().excluded, timeoutInterval);
     // push Describe onto the queue
     QueueManager_1.QueueManager.queue.push(_it);
-    // Increment totIts count
+    // increment totIts count
     QueueManager_1.QueueManager.totIts++;
 }
 exports.it = it;
@@ -158,6 +160,10 @@ function xdescribe(label, callback) {
     // }
     // push Describe onto the queue
     QueueManager_1.QueueManager.queue.push(_describe);
+    // increment totDescribes count
+    QueueManager_1.QueueManager.totDescribes++;
+    // increment totExcDescribes count
+    QueueManager_1.QueueManager.totExcDescribes++;
     // push Describe object onto the callstack
     callstack_1.callStack.pushDescribe(_describe);
     // call callback to register the beforeEach, afterEach, it and describe calls
@@ -279,7 +285,7 @@ function windowsConfiguration() {
         windowGlobals: true,
         timeoutInterval: 50,
         name: "Suite",
-        uiTestContainerId: "ui-test-container",
+        uiTestContainerId: "preamble-ui-container",
         hidePassedTests: false,
         shortCircuit: false
     };
@@ -970,6 +976,8 @@ var QueueManager = (function () {
         return deferred.promise;
     };
     QueueManager.queue = [];
+    QueueManager.totDescribes = 0;
+    QueueManager.totExcDescribes = 0;
     QueueManager.totIts = 0;
     QueueManager.totExclIts = 0;
     return QueueManager;
@@ -1205,8 +1213,7 @@ var spy_1 = require("./core/expectations/spy/spy");
 var deeprecursiveequal_1 = require("./core/expectations/comparators/deeprecursiveequal");
 var expect_3 = require("./core/expectations/expect");
 require("./core/configuration/configuration"); // prevent eliding import
-// import "./core/expectations/matchers/matchers"; // prevent eliding import
-var reporter;
+var reporters;
 // Configure based on environment
 if (environment_1.environment.windows) {
     // add APIs used by suites to the window object
@@ -1218,29 +1225,44 @@ if (environment_1.environment.windows) {
     window["afterEach"] = afterEach_1.afterEach;
     window["expect"] = expect_1.expect;
     window["spyOn"] = spy_1.spyOn;
-    // add reporter plugin
-    if (window.hasOwnProperty("preamble") &&
-        window["preamble"].hasOwnProperty("reporter")) {
-        reporter = window["preamble"]["reporter"];
+    if (window.hasOwnProperty("preamble")) {
+        // add reporter plugin
+        if (window["preamble"].hasOwnProperty("reporters")) {
+            reporters = window["preamble"]["reporters"];
+        }
+        if (!reporters || !reporters.length) {
+            console.log("No reporters found");
+            throw new Error("No reporters found");
+        }
+        // call each reporter's reportBegin method
+        reporters.forEach(function (reporter) { return reporter.reportBegin({
+            uiTestContainerId: configuration_1.configuration.uiTestContainerId,
+            name: configuration_1.configuration.name
+        }); });
+        // expose registerMatcher for one-off in-line matcher registration
+        window["preamble"]["registerMatcher"] = expect_2.registerMatcher;
+        // call each matcher plugin to register their matchers
+        if (window["preamble"].hasOwnProperty("registerMatchers")) {
+            var registerMatchers = window["preamble"]["registerMatchers"];
+            registerMatchers.forEach(function (rm) {
+                return rm(expect_2.registerMatcher, { deepRecursiveCompare: deeprecursiveequal_1.deepRecursiveCompare });
+            });
+            if (!expect_3.matchersCount()) {
+                console.log("No matchers registered");
+                throw new Error("No matchers found");
+            }
+        }
+        else {
+            // no matcher plugins found but matchers can be
+            // registered inline so just log it but don't
+            // throw an exception
+            console.log("No matcher plugins found");
+        }
     }
-    if (!reporter) {
-        console.log("No reporter found");
-        throw new Error("No reporter found");
+    else {
+        console.log("No plugins found");
+        throw new Error("No plugins found");
     }
-    // call each matcher plugin to register their matchers
-    if (window.hasOwnProperty("preamble") &&
-        window["preamble"].hasOwnProperty("registerMatchers")) {
-        var registerMatchers = window["preamble"]["registerMatchers"];
-        registerMatchers.forEach(function (rm) {
-            return rm(expect_2.registerMatcher, { deepRecursiveCompare: deeprecursiveequal_1.deepRecursiveCompare });
-        });
-    }
-    if (!expect_3.matchersCount()) {
-        console.log("No matchers found");
-        throw new Error("No matchers found");
-    }
-    // expose registerMatcher for one-off in-line matcher registration
-    window["preamble"]["registerMatcher"] = expect_2.registerMatcher;
 }
 else {
     throw new Error("Unsuported environment");
@@ -1257,6 +1279,15 @@ new QueueManager_1.QueueManager(100, 2, Q)
     // fulfilled/success
     console.log(msg);
     console.log("QueueManager.queue =", QueueManager_1.QueueManager.queue);
+    // call each reporter's reportSummary method
+    reporters.forEach(function (reporter) { return reporter.reportSummary({
+        totDescribes: QueueManager_1.QueueManager.totDescribes,
+        totExcDescribes: QueueManager_1.QueueManager.totExcDescribes,
+        totIts: QueueManager_1.QueueManager.totIts,
+        totFailedIts: 0,
+        totExcIts: QueueManager_1.QueueManager.totExclIts,
+        name: configuration_1.configuration.name
+    }); });
     // run the queue
     new QueueRunner_1.QueueRunner(QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, Q).run()
         .then(function () {
