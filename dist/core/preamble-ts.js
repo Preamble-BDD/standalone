@@ -58,7 +58,7 @@ var CallStack_1 = require("../callstack/CallStack");
 var UniqueNumber_1 = require("../uniquenumber/UniqueNumber");
 exports.callStack = new CallStack_1.CallStack(new UniqueNumber_1.UniqueNumber());
 
-},{"../callstack/CallStack":8,"../uniquenumber/UniqueNumber":20}],4:[function(require,module,exports){
+},{"../callstack/CallStack":8,"../uniquenumber/UniqueNumber":21}],4:[function(require,module,exports){
 /**
  * Callable API
  * describe("description", callback)
@@ -69,22 +69,23 @@ var Describe_1 = require("../queue/Describe");
 var QueueManager_1 = require("../queue/QueueManager");
 function describe(label, callback) {
     var _describe;
+    var excluded;
     if (arguments.length !== 2 || typeof (arguments[0])
         !== "string" || typeof (arguments[1]) !== "function") {
         throw new TypeError("describe called with invalid parameters");
     }
+    // mark the Describe excluded if any of its parents are excluded
+    excluded = callstack_1.callStack.stack.some(function (item) {
+        return item.excluded;
+    });
     // a Description object
-    _describe = new Describe_1.Describe(callstack_1.callStack.uniqueId.toString(), label, callback, callstack_1.callStack.length && callstack_1.callStack.getTopOfStack() || null, callstack_1.callStack.length && callstack_1.callStack.getTopOfStack().excluded || false);
-    // push Describe onto the queue only if it is a top level Describe
-    // if (callStack.length === 0) {
-    //     QueueManager.queue.push(_describe);
-    // } else {
-    //     callStack.getTopOfStack().items.push(_describe);
-    // }
+    _describe = new Describe_1.Describe(callstack_1.callStack.uniqueId.toString(), label, callback, callstack_1.callStack.length && callstack_1.callStack.getTopOfStack() || null, excluded);
     // push Describe onto the queue
     QueueManager_1.QueueManager.queue.push(_describe);
     // increment totDescribes count
     QueueManager_1.QueueManager.totDescribes++;
+    // increment total excluded Describes if excluded
+    QueueManager_1.QueueManager.totExcDescribes = excluded && QueueManager_1.QueueManager.totExcDescribes + 1 || QueueManager_1.QueueManager.totExcDescribes;
     // push Describe onto the callstack
     callstack_1.callStack.pushDescribe(_describe);
     // call callback to register the beforeEach, afterEach, it and describe calls
@@ -113,6 +114,7 @@ var QueueManager_1 = require("../queue/QueueManager");
 function it(label, callback, timeoutInterval) {
     if (timeoutInterval === void 0) { timeoutInterval = 0; }
     var _it;
+    var excluded;
     if (arguments.length !== 2 && arguments.length !== 3) {
         throw new TypeError("it called with invalid parameters");
     }
@@ -122,12 +124,18 @@ function it(label, callback, timeoutInterval) {
     if (arguments.length === 3 && typeof (arguments[2]) !== "number") {
         throw new TypeError("it called with invalid parameters");
     }
+    // mark the It excluded if any of its parents are excluded
+    excluded = callstack_1.callStack.stack.some(function (item) {
+        return item.excluded;
+    });
     // an It object
-    _it = new It_1.It(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), label, callback, callstack_1.callStack.getTopOfStack().excluded, timeoutInterval);
-    // push Describe onto the queue
+    _it = new It_1.It(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), label, callback, excluded, timeoutInterval);
+    // push It onto the queue
     QueueManager_1.QueueManager.queue.push(_it);
     // increment totIts count
     QueueManager_1.QueueManager.totIts++;
+    // increment total excluded Its if excluded
+    QueueManager_1.QueueManager.totExclIts = excluded && QueueManager_1.QueueManager.totExclIts + 1 || QueueManager_1.QueueManager.totExclIts;
 }
 exports.it = it;
 
@@ -283,6 +291,7 @@ require("../../polyfills/Object.assign"); // prevent eliding import
 function windowsConfiguration() {
     var defaultConfiguration = {
         windowGlobals: true,
+        // TODO(js): timeoutInterval should be 5000 ms/5 seconds.
         timeoutInterval: 50,
         name: "Suite",
         uiTestContainerId: "preamble-ui-container",
@@ -310,7 +319,7 @@ else {
     nodeConfiguration();
 }
 
-},{"../../polyfills/Object.assign":22,"../environment/environment":10}],10:[function(require,module,exports){
+},{"../../polyfills/Object.assign":23,"../environment/environment":10}],10:[function(require,module,exports){
 /**
  * environment
  */
@@ -986,6 +995,7 @@ exports.QueueManager = QueueManager;
 
 },{}],19:[function(require,module,exports){
 "use strict";
+var reportdispatch_1 = require("../reporters/reportdispatch");
 require("../../polyfills/Object.assign"); // prevent eliding import
 // TODO(JS): Add .fail api to done???
 var QueueRunner = (function () {
@@ -1142,17 +1152,28 @@ var QueueRunner = (function () {
         var its = this.queue.filter(function (element) {
             return element.isA === "It";
         });
+        var it;
         // console.log("its", its);
         // recursive iterator
         var runner = function (i) {
             setTimeout(function () {
                 if (i < its.length) {
-                    _this.runIt(its[i])
-                        .then(function () { return runner(++i); })
-                        .fail(function (e) {
-                        console.log(e);
-                        deferred.reject(e);
-                    });
+                    it = its[i];
+                    if (it.excluded || it.parent.excluded) {
+                        reportdispatch_1.reportDispatch.reportSpec(it);
+                        runner(++i);
+                    }
+                    else {
+                        _this.runIt(it)
+                            .then(function () {
+                            reportdispatch_1.reportDispatch.reportSpec(it);
+                            runner(++i);
+                        })
+                            .fail(function (e) {
+                            console.log(e);
+                            deferred.reject(e);
+                        });
+                    }
                 }
                 else {
                     deferred.resolve();
@@ -1168,7 +1189,37 @@ var QueueRunner = (function () {
 }());
 exports.QueueRunner = QueueRunner;
 
-},{"../../polyfills/Object.assign":22}],20:[function(require,module,exports){
+},{"../../polyfills/Object.assign":23,"../reporters/reportdispatch":20}],20:[function(require,module,exports){
+"use strict";
+var ReportDispatch = (function () {
+    function ReportDispatch() {
+    }
+    ReportDispatch.prototype.reportBegin = function (configOptions) {
+        this._reporters.forEach(function (report) { return report.reportBegin(configOptions); });
+    };
+    ReportDispatch.prototype.reportSummary = function (summaryInfo) {
+        this._reporters.forEach(function (report) { return report.reportSummary(summaryInfo); });
+    };
+    ReportDispatch.prototype.reportSuite = function () {
+    };
+    ReportDispatch.prototype.reportSpec = function (it) {
+        this._reporters.forEach(function (report) { return report.reportSpec(it); });
+    };
+    ReportDispatch.prototype.reportEnd = function () {
+    };
+    Object.defineProperty(ReportDispatch.prototype, "reporters", {
+        set: function (reporters) {
+            this._reporters = reporters;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return ReportDispatch;
+}());
+exports.ReportDispatch = ReportDispatch;
+exports.reportDispatch = new ReportDispatch();
+
+},{}],21:[function(require,module,exports){
 /**
  * UniqueNumber
  *
@@ -1191,7 +1242,7 @@ var UniqueNumber = (function () {
 }());
 exports.UniqueNumber = UniqueNumber;
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /**
  * Main entry point module
  */
@@ -1212,6 +1263,7 @@ var expect_2 = require("./core/expectations/expect");
 var spy_1 = require("./core/expectations/spy/spy");
 var deeprecursiveequal_1 = require("./core/expectations/comparators/deeprecursiveequal");
 var expect_3 = require("./core/expectations/expect");
+var reportdispatch_1 = require("./core/reporters/reportdispatch");
 require("./core/configuration/configuration"); // prevent eliding import
 var reporters;
 // Configure based on environment
@@ -1229,16 +1281,18 @@ if (environment_1.environment.windows) {
         // add reporter plugin
         if (window["preamble"].hasOwnProperty("reporters")) {
             reporters = window["preamble"]["reporters"];
+            // hand off reporters to the ReportDispatch
+            reportdispatch_1.reportDispatch.reporters = reporters;
         }
         if (!reporters || !reporters.length) {
             console.log("No reporters found");
             throw new Error("No reporters found");
         }
-        // call each reporter's reportBegin method
-        reporters.forEach(function (reporter) { return reporter.reportBegin({
+        // dispatch reportBegin to reporters
+        reportdispatch_1.reportDispatch.reportBegin({
             uiTestContainerId: configuration_1.configuration.uiTestContainerId,
             name: configuration_1.configuration.name
-        }); });
+        });
         // expose registerMatcher for one-off in-line matcher registration
         window["preamble"]["registerMatcher"] = expect_2.registerMatcher;
         // call each matcher plugin to register their matchers
@@ -1272,6 +1326,16 @@ var timeKeeper = {
     endTime: 0,
     totTime: 0
 };
+// dspatch reportSummary to all reporters
+reportdispatch_1.reportDispatch.reportSummary({
+    totDescribes: 0,
+    totExcDescribes: 0,
+    totIts: 0,
+    totFailedIts: 0,
+    totExcIts: 0,
+    name: configuration_1.configuration.name,
+    totTime: 0
+});
 // get a queue manager and call its run method to run the test suite
 new QueueManager_1.QueueManager(100, 2, Q)
     .run()
@@ -1279,21 +1343,35 @@ new QueueManager_1.QueueManager(100, 2, Q)
     // fulfilled/success
     console.log(msg);
     console.log("QueueManager.queue =", QueueManager_1.QueueManager.queue);
-    // call each reporter's reportSummary method
-    reporters.forEach(function (reporter) { return reporter.reportSummary({
+    // dispatch reportSummary to all reporters
+    reportdispatch_1.reportDispatch.reportSummary({
         totDescribes: QueueManager_1.QueueManager.totDescribes,
         totExcDescribes: QueueManager_1.QueueManager.totExcDescribes,
         totIts: QueueManager_1.QueueManager.totIts,
         totFailedIts: 0,
         totExcIts: QueueManager_1.QueueManager.totExclIts,
-        name: configuration_1.configuration.name
-    }); });
+        name: configuration_1.configuration.name,
+        totTime: 0
+    });
     // run the queue
     new QueueRunner_1.QueueRunner(QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, Q).run()
         .then(function () {
+        var totFailedIts = QueueManager_1.QueueManager.queue.reduce(function (prev, curr) {
+            return curr.isA === "It" && !curr.passed ? prev + 1 : prev;
+        }, 0);
         timeKeeper.endTime = Date.now();
         timeKeeper.totTime = timeKeeper.endTime - timeKeeper.startTime;
         console.log("queue ran successfully in " + timeKeeper.totTime + " miliseconds");
+        // dispatch reportSummary to all reporters
+        reportdispatch_1.reportDispatch.reportSummary({
+            totDescribes: QueueManager_1.QueueManager.totDescribes,
+            totExcDescribes: QueueManager_1.QueueManager.totExcDescribes,
+            totIts: QueueManager_1.QueueManager.totIts,
+            totFailedIts: totFailedIts,
+            totExcIts: QueueManager_1.QueueManager.totExclIts,
+            name: configuration_1.configuration.name,
+            totTime: timeKeeper.totTime
+        });
     }, function () {
         console.log("queue failed to run");
     });
@@ -1302,7 +1380,7 @@ new QueueManager_1.QueueManager(100, 2, Q)
     console.log(msg);
 });
 
-},{"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/spy/spy":13,"./core/queue/QueueManager":18,"./core/queue/QueueRunner":19,"q":24}],22:[function(require,module,exports){
+},{"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/spy/spy":13,"./core/queue/QueueManager":18,"./core/queue/QueueRunner":19,"./core/reporters/reportdispatch":20,"q":25}],23:[function(require,module,exports){
 if (typeof Object.assign !== "function") {
     (function () {
         Object.assign = function (target) {
@@ -1326,7 +1404,7 @@ if (typeof Object.assign !== "function") {
     })();
 }
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1419,7 +1497,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -3471,4 +3549,4 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":23}]},{},[21]);
+},{"_process":24}]},{},[22]);

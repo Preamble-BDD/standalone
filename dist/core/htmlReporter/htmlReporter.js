@@ -1,5 +1,8 @@
 "use strict";
-var testContainer = "preamble-test-container";
+var testContainerId = "preamble-test-container";
+var summaryContainerId = "preamble-summary";
+var summaryStatsId = "preamble-summary-stats";
+var summaryDurationId = "preamble-summary-duration";
 var configOptions;
 var createElement = function (tagName) {
     return document.createElement(tagName);
@@ -7,14 +10,35 @@ var createElement = function (tagName) {
 var createTextNode = function (text) {
     return document.createTextNode(text);
 };
+var getBody = function () {
+    return document.body;
+};
+var getElementByTagName = function (tagName) {
+    return document.getElementsByTagName(tagName);
+};
 var getElementById = function (id) {
     return document.getElementById(id);
 };
 var getTestContainer = function () {
-    return document.getElementById(testContainer);
+    return getElementById(testContainerId);
+};
+var getSummaryContainer = function () {
+    return getElementById(summaryContainerId);
 };
 var getUiTestContainerEl = function () {
-    return document.getElementById(configOptions.uiTestContainerId);
+    return getElementById(configOptions.uiTestContainerId);
+};
+var specId = function (id) {
+    return "spec_" + id;
+};
+var color = function (item) {
+    if (item.excluded) {
+        return "brown";
+    }
+    if (item.passed) {
+        return "auto";
+    }
+    return "red";
 };
 var HtmlReporter = (function () {
     function HtmlReporter() {
@@ -33,20 +57,53 @@ var HtmlReporter = (function () {
     };
     HtmlReporter.prototype.reportBegin = function (confOpts) {
         configOptions = confOpts;
+        getBody().style.margin = "0";
+        getTestContainer().style.fontFamily = "sans-serif";
     };
     HtmlReporter.prototype.reportSummary = function (summaryInfo) {
-        var summaryEl = getElementById("preamble-summary");
+        var duration = parseInt((summaryInfo.totTime / 1000).toString()) + "." + summaryInfo.totTime % 1000;
+        var summaryElId = summaryContainerId;
+        var summaryEl = getElementById(summaryElId);
+        var summaryStatsEl;
+        var summaryDurationEl;
+        var summaryHtml;
         if (!summaryEl) {
-            summaryEl = createElement("div");
-            summaryEl.setAttribute("id", "preamble-summary");
-            summaryEl.style.height = "1.5em";
-            summaryEl.style.lineHeight = "1.5em";
-            summaryEl.style.marginBottom = "auto";
-            summaryEl.style.backgroundColor = "blue";
-            summaryEl.style.color = "white";
-            getTestContainer().insertAdjacentElement("afterbegin", summaryEl);
+            summaryHtml = "<div id=\"" + summaryContainerId + "\" style=\"overflow: hidden; padding: .25em .5em; color: white; background-color: blue;\"><span id=\"preamble-summary-stats\"></span><span id=\"preamble-summary-duration\" style=\"float: right; display: none;\"></span></div>";
+            getTestContainer().insertAdjacentHTML("afterbegin", summaryHtml);
+            summaryEl = getElementById(summaryElId);
         }
-        summaryEl.innerHTML = "<span>" + summaryInfo.name + ": </span> <span style=\"color: white;\">" + summaryInfo.totIts + "</span><b> specs</b>, <span style=\"color: white;\">" + summaryInfo.totFailedIts + "</span><b> failures</b>, <span style=\"color: white;\">" + summaryInfo.totExcIts + "</span><b> excluded</b>";
+        summaryEl.style.backgroundColor = summaryInfo.totIts && summaryInfo.totFailedIts && "red" || summaryInfo.totIts && "green" || "blue";
+        summaryStatsEl = getElementById(summaryStatsId);
+        summaryStatsEl.innerHTML = "<span>" + summaryInfo.name + ": </span> <span style=\"color: white;\">" + summaryInfo.totIts + "</span><b> specs</b>, <span style=\"color: white;\">" + summaryInfo.totFailedIts + "</span><b> failures</b>, <span style=\"color: white;\">" + summaryInfo.totExcIts + "</span><b> excluded</b>";
+        summaryDurationEl = getElementById(summaryDurationId);
+        summaryDurationEl.innerHTML = "<span style=\"font-size: .75em;\">completed in " + duration + "s </span>";
+        summaryDurationEl.style.display = summaryInfo.totTime && "block" || "none";
+    };
+    HtmlReporter.prototype.reportSpec = function (it) {
+        var parents = [];
+        var parent = it.parent;
+        var html;
+        while (parent) {
+            parents.unshift(parent);
+            parent = parent.parent;
+        }
+        if (parents.length) {
+            parents.forEach(function (p) {
+                var pEl = getElementById(specId(p.id));
+                var pParent;
+                if (!pEl) {
+                    html = "<ul><li id=\"" + specId(p.id) + "\"><span style=\"color: " + color(p) + "\">" + p.label + "</span></li></ul>";
+                    if (p.parent) {
+                        getElementById(specId(p.parent.id)).insertAdjacentHTML("beforeend", html);
+                    }
+                    else {
+                        getTestContainer().insertAdjacentHTML("beforeend", html);
+                    }
+                }
+            });
+            html = "<ul><li id=\"" + specId(it.id) + "\"><span style=\"color: " + color(it) + "\">" + it.label + "</span></li></ul>";
+            getElementById(specId(it.parent.id)).insertAdjacentHTML("beforeend", html);
+        }
     };
     return HtmlReporter;
 }());

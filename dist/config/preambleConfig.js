@@ -8,7 +8,8 @@
 window.preambleConfig = {
     windowGlobals: true,
     timeoutInterval: 5000,
-    name: "Test",
+    // name: "Test",
+    name: "Sanity Check",
     uiTestContainerId: "ui-test-container",
     hidePassedTests: false,
     shortCircuit: false
