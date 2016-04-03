@@ -1,4 +1,5 @@
 "use strict";
+var preamble = window.preamble;
 describe("\"describe\" is used to describe a suite which can contain one or more specs", function () {
     it("and \"it\" is used to describe a spec and is used to group one or more expectations\"", function () {
         expect(true).toBeTrue();
@@ -92,7 +93,7 @@ describe("Preventing a spec from timing out", function () {
             count = 10;
             done();
         }, 100);
-    });
+    }, 10);
     it("by passing a timeout value when calling \"it\"", function () {
         expect(count).toEqual(10);
     }, 120);
@@ -532,7 +533,20 @@ describe("Calling and.callFake(fn)", function () {
         expect(someObject.someFn).toHaveReturnedValue(true);
     });
 });
-window.preamble.registerMatcher({
+describe("Q is exposed in the global preamble object for use in suites", function () {
+    beforeEach(function (done) {
+        var _this = this;
+        preamble.Q.delay(150).then(function () {
+            _this.abc = "abc";
+            done();
+        });
+    });
+    it("this.x should be \"abc & shouldn't be \"cba\"", function () {
+        expect(this.abc).toBe("abc");
+        expect(this.abc).not.toBe("cba");
+    });
+});
+preamble.registerMatcher({
     apiName: "toBeAString",
     api: function (matcherValue) { },
     evaluator: function (expectedValue) { return typeof expectedValue === "string"; },
@@ -540,7 +554,7 @@ window.preamble.registerMatcher({
     minArgs: 0,
     maxArgs: 0
 });
-window.preamble.registerMatcher({
+preamble.registerMatcher({
     apiName: "toBeANumber",
     api: function (matcherValue) { },
     evaluator: function (expectedValue) { return typeof expectedValue === "number"; },
@@ -548,7 +562,7 @@ window.preamble.registerMatcher({
     minArgs: 0,
     maxArgs: 0
 });
-window.preamble.registerMatcher({
+preamble.registerMatcher({
     apiName: "toBeInstanceOf",
     api: function (matcherValue) { return matcherValue; },
     evaluator: function (expectedValue, matcherValue) { return expectedValue instanceof matcherValue; },
@@ -556,7 +570,7 @@ window.preamble.registerMatcher({
     minArgs: 1,
     maxArgs: 1
 });
-describe("Custome matchers", function () {
+describe("Custom matchers", function () {
     it("toBeAString can be loaded dynamically and used just like a built in matcher", function () {
         expect("I am a string").toBeAString();
         expect(999).not.toBeAString();
@@ -655,3 +669,4 @@ describe("Calling and.expect.it.toThrowWithMessage(\"Whoops!\")", function () {
         someObject.someFn.validate();
     });
 });
+//# sourceMappingURL=sanitycheck.js.map

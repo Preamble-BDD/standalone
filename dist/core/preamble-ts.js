@@ -6,6 +6,7 @@
 "use strict";
 var AfterEach_1 = require("../queue/AfterEach");
 var callstack_1 = require("./callstack");
+var StackTrace_1 = require("../stacktrace/StackTrace");
 function afterEach(callback, timeoutInterval) {
     if (timeoutInterval === void 0) { timeoutInterval = 0; }
     var _afterEach;
@@ -19,13 +20,13 @@ function afterEach(callback, timeoutInterval) {
         throw new TypeError("afterEach called with invalid parameters");
     }
     // an AfterEach object
-    _afterEach = new AfterEach_1.AfterEach(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), callback, timeoutInterval);
+    _afterEach = new AfterEach_1.AfterEach(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), callback, timeoutInterval, StackTrace_1.stackTrace.stackTrace);
     // add it to its parent describe
     callstack_1.callStack.getTopOfStack().afterEach = _afterEach;
 }
 exports.afterEach = afterEach;
 
-},{"../queue/AfterEach":14,"./callstack":3}],2:[function(require,module,exports){
+},{"../queue/AfterEach":14,"../stacktrace/StackTrace":21,"./callstack":3}],2:[function(require,module,exports){
 /**
  * Callable API
  * beforeEach(function([done]))
@@ -33,6 +34,7 @@ exports.afterEach = afterEach;
 "use strict";
 var BeforeEach_1 = require("../queue/BeforeEach");
 var callstack_1 = require("./callstack");
+var StackTrace_1 = require("../stacktrace/StackTrace");
 function beforeEach(callback, timeoutInterval) {
     if (timeoutInterval === void 0) { timeoutInterval = 0; }
     var _beforeEach;
@@ -46,19 +48,19 @@ function beforeEach(callback, timeoutInterval) {
         throw new TypeError("beforeEach called with invalid parameters");
     }
     // a BeforeEach object
-    _beforeEach = new BeforeEach_1.BeforeEach(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), callback, timeoutInterval);
+    _beforeEach = new BeforeEach_1.BeforeEach(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), callback, timeoutInterval, StackTrace_1.stackTrace.stackTrace);
     // add it to its parent describe
     callstack_1.callStack.getTopOfStack().beforeEach = _beforeEach;
 }
 exports.beforeEach = beforeEach;
 
-},{"../queue/BeforeEach":15,"./callstack":3}],3:[function(require,module,exports){
+},{"../queue/BeforeEach":15,"../stacktrace/StackTrace":21,"./callstack":3}],3:[function(require,module,exports){
 "use strict";
 var CallStack_1 = require("../callstack/CallStack");
 var UniqueNumber_1 = require("../uniquenumber/UniqueNumber");
 exports.callStack = new CallStack_1.CallStack(new UniqueNumber_1.UniqueNumber());
 
-},{"../callstack/CallStack":8,"../uniquenumber/UniqueNumber":21}],4:[function(require,module,exports){
+},{"../callstack/CallStack":8,"../uniquenumber/UniqueNumber":22}],4:[function(require,module,exports){
 /**
  * Callable API
  * describe("description", callback)
@@ -111,6 +113,7 @@ exports.describe = describe;
 var It_1 = require("../queue/It");
 var callstack_1 = require("./callstack");
 var QueueManager_1 = require("../queue/QueueManager");
+var StackTrace_1 = require("../stacktrace/StackTrace");
 function it(label, callback, timeoutInterval) {
     if (timeoutInterval === void 0) { timeoutInterval = 0; }
     var _it;
@@ -129,7 +132,7 @@ function it(label, callback, timeoutInterval) {
         return item.excluded;
     });
     // an It object
-    _it = new It_1.It(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), label, callback, excluded, timeoutInterval);
+    _it = new It_1.It(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), label, callback, excluded, timeoutInterval, StackTrace_1.stackTrace.stackTrace);
     // push It onto the queue
     QueueManager_1.QueueManager.queue.push(_it);
     // increment totIts count
@@ -139,7 +142,7 @@ function it(label, callback, timeoutInterval) {
 }
 exports.it = it;
 
-},{"../queue/It":17,"../queue/QueueManager":18,"./callstack":3}],6:[function(require,module,exports){
+},{"../queue/It":17,"../queue/QueueManager":18,"../stacktrace/StackTrace":21,"./callstack":3}],6:[function(require,module,exports){
 /**
  * Callable API
  * xdescribe("description", callback)
@@ -198,6 +201,7 @@ exports.xdescribe = xdescribe;
 var It_1 = require("../queue/It");
 var callstack_1 = require("./callstack");
 var QueueManager_1 = require("../queue/QueueManager");
+var StackTrace_1 = require("../stacktrace/StackTrace");
 function xit(label, callback, timeoutInterval) {
     if (timeoutInterval === void 0) { timeoutInterval = 0; }
     var _it;
@@ -211,7 +215,7 @@ function xit(label, callback, timeoutInterval) {
         throw new TypeError("it called with invalid parameters");
     }
     // an It object
-    _it = new It_1.It(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), label, callback, true, timeoutInterval);
+    _it = new It_1.It(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), label, callback, true, timeoutInterval, StackTrace_1.stackTrace.stackTrace);
     // push Describe onto the queue
     QueueManager_1.QueueManager.queue.push(_it);
     // Increment totIts count
@@ -221,7 +225,7 @@ function xit(label, callback, timeoutInterval) {
 }
 exports.xit = xit;
 
-},{"../queue/It":17,"../queue/QueueManager":18,"./callstack":3}],8:[function(require,module,exports){
+},{"../queue/It":17,"../queue/QueueManager":18,"../stacktrace/StackTrace":21,"./callstack":3}],8:[function(require,module,exports){
 /**
  * CallStack
  */
@@ -291,8 +295,7 @@ require("../../polyfills/Object.assign"); // prevent eliding import
 function windowsConfiguration() {
     var defaultConfiguration = {
         windowGlobals: true,
-        // TODO(js): timeoutInterval should be 5000 ms/5 seconds.
-        timeoutInterval: 50,
+        timeoutInterval: 5000,
         name: "Suite",
         uiTestContainerId: "preamble-ui-container",
         hidePassedTests: false,
@@ -319,7 +322,7 @@ else {
     nodeConfiguration();
 }
 
-},{"../../polyfills/Object.assign":23,"../environment/environment":10}],10:[function(require,module,exports){
+},{"../../polyfills/Object.assign":24,"../environment/environment":10}],10:[function(require,module,exports){
 /**
  * environment
  */
@@ -881,11 +884,12 @@ exports.spyOn.x = function (argObject, argPropertyNames) {
 },{"../../queue/QueueRunner":19,"../comparators/deeprecursiveequal":11}],14:[function(require,module,exports){
 "use strict";
 var AfterEach = (function () {
-    function AfterEach(parent, id, callback, timeoutInterval) {
+    function AfterEach(parent, id, callback, timeoutInterval, callStack) {
         this.parent = parent;
         this.id = id;
         this.callback = callback;
         this.timeoutInterval = timeoutInterval;
+        this.callStack = callStack;
     }
     return AfterEach;
 }());
@@ -894,11 +898,12 @@ exports.AfterEach = AfterEach;
 },{}],15:[function(require,module,exports){
 "use strict";
 var BeforeEach = (function () {
-    function BeforeEach(parent, id, callback, timeoutInterval) {
+    function BeforeEach(parent, id, callback, timeoutInterval, callStack) {
         this.parent = parent;
         this.id = id;
         this.callback = callback;
         this.timeoutInterval = timeoutInterval;
+        this.callStack = callStack;
     }
     return BeforeEach;
 }());
@@ -926,8 +931,22 @@ exports.Describe = Describe;
 
 },{}],17:[function(require,module,exports){
 "use strict";
+/**
+* returns an It ancestor hierarchy
+*/
+var getAncestorHierarchy = function (describe) {
+    var parent = describe;
+    var hierarchy = [];
+    // build ancestor hierarchy adding parent to the top of the hierarcy
+    while (parent) {
+        hierarchy.unshift(parent);
+        parent = parent.parent;
+    }
+    // return ancestor hierarchy
+    return hierarchy;
+};
 var It = (function () {
-    function It(parent, id, label, callback, excluded, timeoutInterval) {
+    function It(parent, id, label, callback, excluded, timeoutInterval, callStack) {
         if (excluded === void 0) { excluded = false; }
         this.parent = parent;
         this.id = id;
@@ -935,10 +954,12 @@ var It = (function () {
         this.callback = callback;
         this.excluded = excluded;
         this.timeoutInterval = timeoutInterval;
+        this.callStack = callStack;
         this.expectations = [];
         this.scope = {};
         this.isA = "It";
         this.passed = true;
+        this.hierarchy = getAncestorHierarchy(parent);
     }
     return It;
 }());
@@ -995,13 +1016,13 @@ exports.QueueManager = QueueManager;
 
 },{}],19:[function(require,module,exports){
 "use strict";
-var reportdispatch_1 = require("../reporters/reportdispatch");
 require("../../polyfills/Object.assign"); // prevent eliding import
 // TODO(JS): Add .fail api to done???
 var QueueRunner = (function () {
-    function QueueRunner(queue, configTimeoutInterval, Q) {
+    function QueueRunner(queue, configTimeoutInterval, reportDispatch, Q) {
         this.queue = queue;
         this.configTimeoutInterval = configTimeoutInterval;
+        this.reportDispatch = reportDispatch;
         this.Q = Q;
     }
     /**
@@ -1013,24 +1034,34 @@ var QueueRunner = (function () {
      * Example:
      * beforeEach(function(done) {...}, 1);
      */
-    QueueRunner.prototype.runBeforeItAfter = function (fn, context) {
+    QueueRunner.prototype.runBeforeItAfter = function (fn, context, timeoutInterval) {
         var deferred = this.Q.defer();
         setTimeout(function () {
+            var resolve = function () {
+                if (deferred.promise.isPending()) {
+                    deferred.resolve();
+                }
+            };
             if (fn.length) {
                 // Asynchronously calls fn passing callback for done parameter
                 setTimeout(function () {
-                    fn.call(context, function () {
-                        deferred.resolve();
-                    });
+                    fn.call(context, function () { return resolve(); });
                 }, 1);
             }
             else {
                 // Synchronously calls fn
                 setTimeout(function () {
                     fn.call(context);
-                    deferred.resolve();
+                    resolve();
                 }, 1);
             }
+            // a timer that expires after timeoutInterval miliseconds
+            setTimeout(function () {
+                if (deferred.promise.isPending()) {
+                    // timedOut = true;
+                    deferred.reject(new Error("timed out after " + timeoutInterval + "ms"));
+                }
+            }, timeoutInterval);
         }, 1);
         // Immediately return a promise to the caller.
         return deferred.promise;
@@ -1038,12 +1069,13 @@ var QueueRunner = (function () {
     /**
      * runs ancestor hierarchy of BeforeEach with inherited contexts
      */
+    // TODO(js): combine runBefores and runAfters into one routine using a callback to determine whether to run the before or after
     QueueRunner.prototype.runBefores = function (hierarchy) {
         var _this = this;
         var deferred = this.Q.defer();
         var runner = function (ndx) {
             setTimeout(function () {
-                if (ndx < hierarchy.length) {
+                if (ndx < hierarchy.length && deferred.promise.isPending()) {
                     // setup the context for calling BeforeEach.callback
                     // if it is not the 1st ([0]) item in the array
                     if (ndx) {
@@ -1057,16 +1089,19 @@ var QueueRunner = (function () {
                     if (hierarchy[ndx].beforeEach) {
                         var ms = hierarchy[ndx].beforeEach.timeoutInterval > 0
                             && hierarchy[ndx].beforeEach.timeoutInterval || _this.configTimeoutInterval;
-                        _this.runBeforeItAfter(hierarchy[ndx].beforeEach.callback, hierarchy[ndx].context)
-                            .timeout(ms, "beforeEach timed out after " + ms + " miliseconds")
-                            .then(function () { return runner(++ndx); }, function (error) { return deferred.reject(error); });
+                        _this.runBeforeItAfter(hierarchy[ndx].beforeEach.callback, hierarchy[ndx].context, ms)
+                            .then(function () { return runner(++ndx); }, function (error) {
+                            deferred.reject(new Error("beforeEach " + error.message));
+                        });
                     }
                     else {
                         runner(++ndx);
                     }
                 }
                 else {
-                    deferred.resolve();
+                    if (deferred.promise.isPending()) {
+                        deferred.resolve();
+                    }
                 }
             }, 1);
         };
@@ -1076,32 +1111,39 @@ var QueueRunner = (function () {
     /**
      * runs ancestor hierarchy of AfterEach with inherited contexts
      */
+    // TODO(js): combine runBefores and runAfters into one routine using a callback to determine whether to run the before or after
     QueueRunner.prototype.runAfters = function (hierarchy) {
         var _this = this;
         var deferred = this.Q.defer();
         var runner = function (ndx) {
             setTimeout(function () {
-                if (ndx < hierarchy.length) {
-                    // setup the context for calling afterEach.callback
+                if (ndx < hierarchy.length && deferred.promise.isPending()) {
+                    // setup the context for calling BeforeEach.callback
                     // if it is not the 1st ([0]) item in the array
                     if (ndx) {
-                        // the current context is a result of applying its parent's context values ontop of its own current values
-                        Object.assign(hierarchy[ndx].context, hierarchy[ndx - 1].context);
+                        // the current context is a result of applying its parent's context values to a blank object
+                        hierarchy[ndx].context = Object.assign({}, hierarchy[ndx - 1].context);
                         console.log("afterEach context for " + hierarchy[ndx].label, hierarchy[ndx].context);
+                    }
+                    else {
+                        hierarchy[ndx].context = {};
                     }
                     if (hierarchy[ndx].afterEach) {
                         var ms = hierarchy[ndx].afterEach.timeoutInterval > 0
                             && hierarchy[ndx].afterEach.timeoutInterval || _this.configTimeoutInterval;
-                        _this.runBeforeItAfter(hierarchy[ndx].afterEach.callback, hierarchy[ndx].context)
-                            .timeout(ms, "afterEach timed out after " + ms + " miliseconds")
-                            .then(function () { return runner(++ndx); }, function (error) { return deferred.reject(error); });
+                        _this.runBeforeItAfter(hierarchy[ndx].afterEach.callback, hierarchy[ndx].context, ms)
+                            .then(function () { return runner(++ndx); }, function (error) {
+                            deferred.reject(new Error("afterEach " + error.message));
+                        });
                     }
                     else {
                         runner(++ndx);
                     }
                 }
                 else {
-                    deferred.resolve();
+                    if (deferred.promise.isPending()) {
+                        deferred.resolve();
+                    }
                 }
             }, 1);
         };
@@ -1114,33 +1156,46 @@ var QueueRunner = (function () {
     QueueRunner.prototype.runIt = function (it) {
         var _this = this;
         var deferred = this.Q.defer();
-        var hierarchy = this.getAncestorHierarchy(it.parent);
         var ms = it.timeoutInterval > 0 && it.timeoutInterval || this.configTimeoutInterval;
         setTimeout(function () {
-            exports.currentIt = it;
-            _this.runBefores(hierarchy)
-                .then(function () {
-                return _this.runBeforeItAfter(it.callback, it.parent.context)
-                    .timeout(ms, "it." + it.label + " timed out after " + ms + " miliseconds");
-            })
-                .then(function () { return _this.runAfters(hierarchy); })
-                .then(function () { return deferred.resolve(); }, function (error) { return deferred.reject(error); });
+            _this.runBeforeItAfter(it.callback, it.parent.context, ms).
+                then(function () {
+                deferred.resolve();
+            }, function (error) {
+                deferred.reject(new Error("it " + error.message));
+            });
         }, 1);
         return deferred.promise;
     };
     /**
-     * build and return an ancestor hierarchy
+     * run before/it/after block
      */
-    QueueRunner.prototype.getAncestorHierarchy = function (describe) {
-        var parent = describe;
-        var hierarchy = [];
-        // build ancestor hierarchy adding parent to the top of the hierarcy
-        while (parent) {
-            hierarchy.unshift(parent);
-            parent = parent.parent;
-        }
-        // return ancestor hierarchy
-        return hierarchy;
+    QueueRunner.prototype.runBIA = function (it) {
+        var _this = this;
+        var deferred = this.Q.defer();
+        setTimeout(function () {
+            exports.currentIt = it;
+            _this.runBefores(it.hierarchy).then(function () {
+                _this.runIt(it).then(function () {
+                    _this.runAfters(it.hierarchy).then(function () {
+                        deferred.resolve();
+                    }, function (error) {
+                        it.timeoutInfo = { reason: error.message, stackTrace: it.parent.afterEach.callStack };
+                        it.passed = false;
+                        deferred.reject(error);
+                    });
+                }, function (error) {
+                    it.timeoutInfo = { reason: error.message, stackTrace: it.callStack };
+                    it.passed = false;
+                    deferred.reject(error);
+                });
+            }, function (error) {
+                it.timeoutInfo = { reason: error.message, stackTrace: it.parent.beforeEach.callStack };
+                it.passed = false;
+                deferred.reject(error);
+            });
+        }, 1);
+        return deferred.promise;
     };
     /**
      * recursively iterates through all the queue's Its
@@ -1159,19 +1214,20 @@ var QueueRunner = (function () {
             setTimeout(function () {
                 if (i < its.length) {
                     it = its[i];
+                    // TODO(js): is parent.excluded check really needed????
                     if (it.excluded || it.parent.excluded) {
-                        reportdispatch_1.reportDispatch.reportSpec(it);
+                        _this.reportDispatch.reportSpec(it);
                         runner(++i);
                     }
                     else {
-                        _this.runIt(it)
+                        _this.runBIA(it)
                             .then(function () {
-                            reportdispatch_1.reportDispatch.reportSpec(it);
+                            _this.reportDispatch.reportSpec(it);
                             runner(++i);
                         })
-                            .fail(function (e) {
-                            console.log(e);
-                            deferred.reject(e);
+                            .fail(function () {
+                            _this.reportDispatch.reportSpec(it);
+                            runner(++i);
                         });
                     }
                 }
@@ -1189,7 +1245,7 @@ var QueueRunner = (function () {
 }());
 exports.QueueRunner = QueueRunner;
 
-},{"../../polyfills/Object.assign":23,"../reporters/reportdispatch":20}],20:[function(require,module,exports){
+},{"../../polyfills/Object.assign":24}],20:[function(require,module,exports){
 "use strict";
 var ReportDispatch = (function () {
     function ReportDispatch() {
@@ -1220,6 +1276,59 @@ exports.ReportDispatch = ReportDispatch;
 exports.reportDispatch = new ReportDispatch();
 
 },{}],21:[function(require,module,exports){
+"use strict";
+var StackTrace = (function () {
+    function StackTrace() {
+        // determine the Error object's stack trace property
+        try {
+            throw new Error("testing for stack or stacktrace");
+        }
+        catch (error) {
+            this.stackTraceProperty = error.stack ? "stack" : error.stacktrace ?
+                "stacktrace" : undefined;
+        }
+    }
+    // TODO(JS): might not want to do this and instead might want to include references to preamble.js or even make it configurable
+    StackTrace.prototype.filterstackTrace = function (st) {
+        var reFileFromStackTrace = /file:\/\/\/\S+\.js:[0-9]+[:0-9]*/g;
+        // Get all file references ...
+        var matches = st.match(reFileFromStackTrace);
+        // ... and return an array of file references except those to preamble.js
+        return matches.filter(function (el) {
+            return el.search(/preamble-ts.js/) === -1;
+        });
+    };
+    StackTrace.prototype.stackTraceFromError = function () {
+        var stackTrace = null;
+        if (this.stackTraceProperty) {
+            try {
+                throw new Error();
+            }
+            catch (error) {
+                stackTrace = error[this.stackTraceProperty];
+            }
+        }
+        return stackTrace;
+    };
+    Object.defineProperty(StackTrace.prototype, "stackTrace", {
+        get: function () {
+            var st;
+            var flt = null;
+            st = this.stackTraceFromError();
+            if (st) {
+                flt = this.filterstackTrace(st);
+            }
+            return flt;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return StackTrace;
+}());
+exports.StackTrace = StackTrace;
+exports.stackTrace = new StackTrace();
+
+},{}],22:[function(require,module,exports){
 /**
  * UniqueNumber
  *
@@ -1242,7 +1351,7 @@ var UniqueNumber = (function () {
 }());
 exports.UniqueNumber = UniqueNumber;
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /**
  * Main entry point module
  */
@@ -1266,6 +1375,8 @@ var expect_3 = require("./core/expectations/expect");
 var reportdispatch_1 = require("./core/reporters/reportdispatch");
 require("./core/configuration/configuration"); // prevent eliding import
 var reporters;
+// turn on long stact support in Q
+Q.longStackSupport = true;
 // Configure based on environment
 if (environment_1.environment.windows) {
     // add APIs used by suites to the window object
@@ -1291,7 +1402,8 @@ if (environment_1.environment.windows) {
         // dispatch reportBegin to reporters
         reportdispatch_1.reportDispatch.reportBegin({
             uiTestContainerId: configuration_1.configuration.uiTestContainerId,
-            name: configuration_1.configuration.name
+            name: configuration_1.configuration.name,
+            hidePassedTests: configuration_1.configuration.hidePassedTests
         });
         // expose registerMatcher for one-off in-line matcher registration
         window["preamble"]["registerMatcher"] = expect_2.registerMatcher;
@@ -1312,6 +1424,8 @@ if (environment_1.environment.windows) {
             // throw an exception
             console.log("No matcher plugins found");
         }
+        // expose Q on wondow.preamble
+        window["preamble"].Q = Q;
     }
     else {
         console.log("No plugins found");
@@ -1354,7 +1468,7 @@ new QueueManager_1.QueueManager(100, 2, Q)
         totTime: 0
     });
     // run the queue
-    new QueueRunner_1.QueueRunner(QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, Q).run()
+    new QueueRunner_1.QueueRunner(QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, reportdispatch_1.reportDispatch, Q).run()
         .then(function () {
         var totFailedIts = QueueManager_1.QueueManager.queue.reduce(function (prev, curr) {
             return curr.isA === "It" && !curr.passed ? prev + 1 : prev;
@@ -1380,7 +1494,7 @@ new QueueManager_1.QueueManager(100, 2, Q)
     console.log(msg);
 });
 
-},{"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/spy/spy":13,"./core/queue/QueueManager":18,"./core/queue/QueueRunner":19,"./core/reporters/reportdispatch":20,"q":25}],23:[function(require,module,exports){
+},{"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/spy/spy":13,"./core/queue/QueueManager":18,"./core/queue/QueueRunner":19,"./core/reporters/reportdispatch":20,"q":26}],24:[function(require,module,exports){
 if (typeof Object.assign !== "function") {
     (function () {
         Object.assign = function (target) {
@@ -1404,7 +1518,7 @@ if (typeof Object.assign !== "function") {
     })();
 }
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1497,7 +1611,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -3549,4 +3663,4 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":24}]},{},[22]);
+},{"_process":25}]},{},[23]);

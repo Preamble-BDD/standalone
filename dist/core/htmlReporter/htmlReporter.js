@@ -28,7 +28,7 @@ var getSummaryContainer = function () {
 var getUiTestContainerEl = function () {
     return getElementById(configOptions.uiTestContainerId);
 };
-var specId = function (id) {
+var id = function (id) {
     return "spec_" + id;
 };
 var color = function (item) {
@@ -57,7 +57,7 @@ var HtmlReporter = (function () {
     };
     HtmlReporter.prototype.reportBegin = function (confOpts) {
         configOptions = confOpts;
-        getBody().style.margin = "0";
+        getBody().style.margin = "52px 0 0 0";
         getTestContainer().style.fontFamily = "sans-serif";
     };
     HtmlReporter.prototype.reportSummary = function (summaryInfo) {
@@ -68,7 +68,7 @@ var HtmlReporter = (function () {
         var summaryDurationEl;
         var summaryHtml;
         if (!summaryEl) {
-            summaryHtml = "<div id=\"" + summaryContainerId + "\" style=\"overflow: hidden; padding: .25em .5em; color: white; background-color: blue;\"><span id=\"preamble-summary-stats\"></span><span id=\"preamble-summary-duration\" style=\"float: right; display: none;\"></span></div>";
+            summaryHtml = "<div id=\"" + summaryContainerId + "\" style=\"box-sizing: border-box; position: fixed; top: 0; width: 100%; overflow: hidden; padding: .25em .5em; color: white; background-color: blue;\"><span id=\"preamble-summary-stats\"></span><span id=\"preamble-summary-duration\" style=\"float: right; display: none;\"></span></div>";
             getTestContainer().insertAdjacentHTML("afterbegin", summaryHtml);
             summaryEl = getElementById(summaryElId);
         }
@@ -83,26 +83,47 @@ var HtmlReporter = (function () {
         var parents = [];
         var parent = it.parent;
         var html;
+        var htmlStackTrace;
         while (parent) {
             parents.unshift(parent);
             parent = parent.parent;
         }
         if (parents.length) {
             parents.forEach(function (p) {
-                var pEl = getElementById(specId(p.id));
+                var pEl = getElementById(id(p.id));
                 var pParent;
                 if (!pEl) {
-                    html = "<ul><li id=\"" + specId(p.id) + "\"><span style=\"color: " + color(p) + "\">" + p.label + "</span></li></ul>";
+                    if (it.passed && configOptions.hidePassedTests) {
+                        html = "<ul style=\"display: none;\"><li id=\"" + id(p.id) + "\"><span style=\"color: " + color(p) + "\">" + p.label + "</span></li></ul>";
+                    }
+                    else {
+                        html = "<ul><li id=\"" + id(p.id) + "\"><span style=\"color: " + color(p) + "\">" + p.label + "</span></li></ul>";
+                    }
                     if (p.parent) {
-                        getElementById(specId(p.parent.id)).insertAdjacentHTML("beforeend", html);
+                        getElementById(id(p.parent.id)).insertAdjacentHTML("beforeend", html);
                     }
                     else {
                         getTestContainer().insertAdjacentHTML("beforeend", html);
                     }
                 }
             });
-            html = "<ul><li id=\"" + specId(it.id) + "\"><span style=\"color: " + color(it) + "\">" + it.label + "</span></li></ul>";
-            getElementById(specId(it.parent.id)).insertAdjacentHTML("beforeend", html);
+            if (it.passed && configOptions.hidePassedTests) {
+                html = "<ul style=\"display: none;\"><li id=\"" + id(it.id) + "\"><span style=\"color: " + color(it) + "\">" + it.label + "</span></li></ul>";
+            }
+            else {
+                html = "<ul><li id=\"" + id(it.id) + "\"><span style=\"color: " + color(it) + "\">" + it.label + "</span></li></ul>";
+            }
+            getElementById(id(it.parent.id)).insertAdjacentHTML("beforeend", html);
+            if (!it.passed) {
+                html = "<ul><li id=\"" + id(it.id) + "-reason\"><span style=\"color: " + color(it) + "\">" + it.timeoutInfo.reason + "</span></li></ul>";
+                getElementById(id(it.id)).insertAdjacentHTML("beforeend", html);
+                html = "<ul id=\"" + id(it.id) + "-reason-stack-trace\"></ul>";
+                getElementById(id(it.id) + "-reason").insertAdjacentHTML("beforeend", html);
+                it.timeoutInfo.stackTrace.forEach(function (stackTrace) {
+                    html = "<li id=\"" + id(it.id) + "-reason-stack-trace-item\"><span style=\"color: " + color(it) + "\">" + stackTrace + "</span></li>";
+                    getElementById(id(it.id) + "-reason-stack-trace").insertAdjacentHTML("beforeend", html);
+                });
+            }
         }
     };
     return HtmlReporter;

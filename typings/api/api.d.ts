@@ -9,6 +9,7 @@ declare interface IMatcher {
 declare interface Window {
     preamble: {
         registerMatcher(matcher: IMatcher): void;
+        Q: typeof Q;
     };
 }
 declare function registerMatcher(matcher: IMatcher): void;
