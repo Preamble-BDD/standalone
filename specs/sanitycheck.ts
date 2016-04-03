@@ -103,7 +103,7 @@ describe(`Preventing a spec from timing out`, function() {
             count = 10;
             done();
         }, 100);
-    }, 10);
+    });
     it(`by passing a timeout value when calling "it"`, function() {
         expect(count).toEqual(10);
     }, 120);
@@ -126,7 +126,7 @@ describe(`Sharing values between setups, specs and teardowns using "this"`, func
         });
     });
     it(`this.otherValue should not exist and this.value should equal 10`, function() {
-        expect(this.otherValue).toEqual(undefined);
+        expect(this.otherValue).toBeUndefined();
         expect(this.value).toEqual(10);
     });
 });
@@ -604,7 +604,7 @@ describe(`Calling and.callFake(fn)`, function() {
 // Q is exposed on the preamble object
 describe(`Q is exposed in the global preamble object for use in suites`, function() {
     beforeEach(function(done) {
-        preamble.Q.delay(150).then(() => {
+        window.preamble.Q.delay(150).then(() => {
             this.abc = "abc";
             done();
         });
@@ -616,7 +616,7 @@ describe(`Q is exposed in the global preamble object for use in suites`, functio
 });
 
 // custom matchers
-preamble.registerMatcher({
+window.preamble.registerMatcher({
     apiName: "toBeAString",
     api: (matcherValue: any): void => { },
     evaluator: (expectedValue): boolean => typeof expectedValue === "string",
@@ -624,7 +624,7 @@ preamble.registerMatcher({
     minArgs: 0,
     maxArgs: 0
 });
-preamble.registerMatcher({
+window.preamble.registerMatcher({
     apiName: "toBeANumber",
     api: (matcherValue: any): void => { },
     evaluator: (expectedValue): boolean => typeof expectedValue === "number",
@@ -632,7 +632,7 @@ preamble.registerMatcher({
     minArgs: 0,
     maxArgs: 0
 });
-preamble.registerMatcher({
+window.preamble.registerMatcher({
     apiName: "toBeInstanceOf",
     api: (matcherValue: any): any => matcherValue,
     evaluator: (expectedValue, matcherValue): boolean => expectedValue instanceof matcherValue,

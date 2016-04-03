@@ -84,6 +84,7 @@ var HtmlReporter = (function () {
         var parent = it.parent;
         var html;
         var htmlStackTrace;
+        var reasonNumber;
         while (parent) {
             parents.unshift(parent);
             parent = parent.parent;
@@ -115,13 +116,17 @@ var HtmlReporter = (function () {
             }
             getElementById(id(it.parent.id)).insertAdjacentHTML("beforeend", html);
             if (!it.passed) {
-                html = "<ul><li id=\"" + id(it.id) + "-reason\"><span style=\"color: " + color(it) + "\">" + it.timeoutInfo.reason + "</span></li></ul>";
-                getElementById(id(it.id)).insertAdjacentHTML("beforeend", html);
-                html = "<ul id=\"" + id(it.id) + "-reason-stack-trace\"></ul>";
-                getElementById(id(it.id) + "-reason").insertAdjacentHTML("beforeend", html);
-                it.timeoutInfo.stackTrace.forEach(function (stackTrace) {
-                    html = "<li id=\"" + id(it.id) + "-reason-stack-trace-item\"><span style=\"color: " + color(it) + "\">" + stackTrace + "</span></li>";
-                    getElementById(id(it.id) + "-reason-stack-trace").insertAdjacentHTML("beforeend", html);
+                reasonNumber = 0;
+                it.reasons.forEach(function (reason) {
+                    reasonNumber++;
+                    html = "<ul><li id=\"" + id(it.id) + "-reason-" + reasonNumber + "\"><span style=\"color: " + color(it) + "\">" + reason.reason + "</span></li></ul>";
+                    getElementById(id(it.id)).insertAdjacentHTML("beforeend", html);
+                    html = "<ul id=\"" + id(it.id) + "-reason-stack-trace-" + reasonNumber + "\"></ul>";
+                    getElementById(id(it.id) + "-reason-" + reasonNumber).insertAdjacentHTML("beforeend", html);
+                    reason.stackTrace.forEach(function (stackTrace) {
+                        html = "<li id=\"" + id(it.id) + "-reason-stack-trace-item\"><span style=\"color: " + color(it) + "\">" + stackTrace + "</span></li>";
+                        getElementById(id(it.id) + "-reason-stack-trace-" + reasonNumber).insertAdjacentHTML("beforeend", html);
+                    });
                 });
             }
         }

@@ -408,6 +408,7 @@ var compareArrays = function (a, b) {
 "use strict";
 var spy_1 = require("./spy/spy");
 var QueueRunner_1 = require("../queue/QueueRunner");
+var StackTrace_1 = require("../stacktrace/StackTrace");
 var matchers = [];
 var expectationAPI = {};
 var expectationAPICount = 0;
@@ -449,17 +450,31 @@ var argsChecker = function (matcher, argsLength) {
     return true;
 };
 var addNoteToIt = function (note) { return QueueRunner_1.currentIt.expectations.push(note); };
+var assignReason = function (note) {
+    var reason;
+    if (!note.result) {
+        if (note.matcherValue != null) {
+            reason = "expect(" + note.expectedValue + ")." + note.apiName + "(" + note.matcherValue + ") failed!";
+        }
+        else {
+            reason = "expect(" + note.expectedValue + ")." + note.apiName + "() failed!";
+        }
+        QueueRunner_1.currentIt.reasons.push({ reason: reason, stackTrace: note.stackTrace });
+    }
+};
 // add not api to expect api
 expectationAPI["not"] = negatedExpectationAPI;
 // expect(value)
 exports.expect = function (ev) {
     // if a callback was returned then call it and use what it returns for the expected value
     var expectedValue = ev;
+    // capture the stack trace here when expect is called.
+    var st = StackTrace_1.stackTrace.stackTrace;
     if (typeof (ev) === "function" && !ev.hasOwnProperty("_spyMaker")) {
         var spy = spy_1.spyOn(ev).and.callActual();
         expectedValue = spy();
     }
-    note = { it: QueueRunner_1.currentIt, apiName: null, expectedValue: expectedValue, matcherValue: null, result: null, exception: null };
+    note = { it: QueueRunner_1.currentIt, apiName: null, expectedValue: expectedValue, matcherValue: null, result: null, exception: null, stackTrace: st };
     return expectationAPI;
 };
 exports.registerMatcher = function (matcher) {
@@ -492,6 +507,7 @@ exports.registerMatcher = function (matcher) {
                     }
                 }
                 addNoteToIt(note);
+                assignReason(note);
                 // set It's and its parent Describe's passed property to false when expectation fails
                 QueueRunner_1.currentIt.passed = !note.result ? note.result : QueueRunner_1.currentIt.passed;
                 QueueRunner_1.currentIt.parent.passed = !note.result ? note.result : QueueRunner_1.currentIt.parent.passed;
@@ -511,7 +527,7 @@ exports.registerMatcher = function (matcher) {
 };
 exports.matchersCount = function () { return expectationAPICount; };
 
-},{"../queue/QueueRunner":19,"./spy/spy":13}],13:[function(require,module,exports){
+},{"../queue/QueueRunner":19,"../stacktrace/StackTrace":21,"./spy/spy":13}],13:[function(require,module,exports){
 "use strict";
 var deeprecursiveequal_1 = require("../comparators/deeprecursiveequal");
 var QueueRunner_1 = require("../../queue/QueueRunner");
@@ -801,7 +817,8 @@ exports.spyOn = function () {
                 expectedValue: spy,
                 matcherValue: matcherValue || null,
                 result: null,
-                exception: null
+                exception: null,
+                stackTrace: null
             };
             try {
                 note.result = evaluator();
@@ -809,6 +826,7 @@ exports.spyOn = function () {
             catch (error) {
                 note.exception = error;
             }
+            // TODO(js): assign reason for failure here once it is working with the expect api.
             QueueRunner_1.currentIt.expectations.push(note);
             console.log("note", note);
         };
@@ -960,6 +978,7 @@ var It = (function () {
         this.isA = "It";
         this.passed = true;
         this.hierarchy = getAncestorHierarchy(parent);
+        this.reasons = [];
     }
     return It;
 }());
@@ -1180,17 +1199,17 @@ var QueueRunner = (function () {
                     _this.runAfters(it.hierarchy).then(function () {
                         deferred.resolve();
                     }, function (error) {
-                        it.timeoutInfo = { reason: error.message, stackTrace: it.parent.afterEach.callStack };
+                        it.reasons.push({ reason: error.message, stackTrace: it.parent.afterEach.callStack });
                         it.passed = false;
                         deferred.reject(error);
                     });
                 }, function (error) {
-                    it.timeoutInfo = { reason: error.message, stackTrace: it.callStack };
+                    it.reasons.push({ reason: error.message, stackTrace: it.callStack });
                     it.passed = false;
                     deferred.reject(error);
                 });
             }, function (error) {
-                it.timeoutInfo = { reason: error.message, stackTrace: it.parent.beforeEach.callStack };
+                it.reasons.push({ reason: error.message, stackTrace: it.parent.beforeEach.callStack });
                 it.passed = false;
                 deferred.reject(error);
             });
@@ -1220,12 +1239,11 @@ var QueueRunner = (function () {
                         runner(++i);
                     }
                     else {
-                        _this.runBIA(it)
-                            .then(function () {
+                        _this.runBIA(it).then(function () {
                             _this.reportDispatch.reportSpec(it);
                             runner(++i);
-                        })
-                            .fail(function () {
+                        }).fail(function () {
+                            // an it timed out or one or more expectations failed
                             _this.reportDispatch.reportSpec(it);
                             runner(++i);
                         });
