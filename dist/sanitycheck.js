@@ -146,6 +146,8 @@ describe("Calling toBeTruthy", function () {
     it("sets the expectation that the actual value is truthy", function () {
         expect(1).toBeTruthy();
         expect(0).not.toBeTruthy();
+        expect("abc").toBeTruthy();
+        expect("").not.toBeTruthy();
     });
 });
 describe("Calling toHaveBeenCalled", function () {

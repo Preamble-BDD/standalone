@@ -450,14 +450,37 @@ var argsChecker = function (matcher, argsLength) {
     return true;
 };
 var addNoteToIt = function (note) { return QueueRunner_1.currentIt.expectations.push(note); };
+var showAs = function (value) {
+    if (Array.isArray(value)) {
+        return "array";
+    }
+    if (typeof (value) === "function") {
+        return "function";
+    }
+    if (typeof (value) === "object") {
+        return "object";
+    }
+    if (typeof (value) === "string") {
+        return "\"" + value + "\"";
+    }
+    if (typeof (value) === "number") {
+        return value;
+    }
+    if (typeof (value) === "boolean") {
+        return value;
+    }
+    if (typeof (value) === "undefined") {
+        return "undefined";
+    }
+};
 var assignReason = function (note) {
     var reason;
     if (!note.result) {
         if (note.matcherValue != null) {
-            reason = "expect(" + note.expectedValue + ")." + note.apiName + "(" + note.matcherValue + ") failed!";
+            reason = "expect(" + showAs(note.expectedValue) + ")." + note.apiName + "(" + showAs(note.matcherValue) + ") failed!";
         }
         else {
-            reason = "expect(" + note.expectedValue + ")." + note.apiName + "() failed!";
+            reason = "expect(" + showAs(note.expectedValue) + ")." + note.apiName + "() failed!";
         }
         QueueRunner_1.currentIt.reasons.push({ reason: reason, stackTrace: note.stackTrace });
     }
