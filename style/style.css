@@ -1,0 +1,76 @@
+body {
+    margin: 52px 0 0 0;
+    font-size: 1em;
+    font-family: sans-serif;
+}
+/* summary info */
+.preamble-summary {
+    box-sizing: border-box;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    overflow: hidden;
+    padding: .25em .5em;
+    color: white;
+    background-color: #000;
+}
+.preamble-summary-hidden {
+    display: none;
+}
+.preamble-summary-pending {
+    background-color: #bdbdbd;
+    display: block;
+}
+.preamble-summary-pass {
+    background-color: green;
+}
+.preamble-summary-fail {
+    background-color: #f00;
+}
+.preamble-summary span {
+    color: #fff;
+}
+.preamble-summary-duration {
+    float: right;
+}
+.preamble-summary-duration-hidden {
+    visibility: hidden;
+}
+
+.preamble-summary-duration span {
+    font-size: .75em;
+}
+ul {
+    list-style: none;
+    padding-left: 20px;
+}
+/* suite */
+.suite {
+}
+.suite-passed {
+    color: #000;
+}
+.suite-failed {
+    color: #f00;
+}
+.suite-hiden {
+    display: none;
+}
+/* spec */
+.spec {
+}
+.spec-passed {
+    color: #0f0;
+}
+.spec-failed {
+    color: #f00;
+}
+/* suite * spec */
+.suite-excluded,
+.spec-excluded {
+    color: brown;
+}
+/* reason */
+.reason, .reason-stacktrace, .reason-stacktrace-item{
+    color: #f00;
+}

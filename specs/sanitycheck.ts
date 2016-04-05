@@ -3,7 +3,7 @@ let preamble = window.preamble;
 
 describe(`"describe" is used to describe a suite which can contain one or more specs`, function() {
     it(`and "it" is used to describe a spec and is used to group one or more expectations"`, function() {
-        expect(true).toBeTrue();
+        expect(true).not.toBeTrue();
         expect(false).not.toBeTrue();
         expect("abc").toEqual("abc");
         expect(123).not.toEqual("abc");
@@ -128,6 +128,23 @@ describe(`Sharing values between setups, specs and teardowns using "this"`, func
     it(`this.otherValue should not exist and this.value should equal 10`, function() {
         expect(this.otherValue).toBeUndefined();
         expect(this.value).toEqual(10);
+    });
+});
+
+describe("Prevent a suite from running by excluding it with xdescribe", function() {
+    xdescribe("this suite will be excluded and will not be run", function() {
+        it("this spec will not be run", function() {
+            expect(1).toBe(1);
+        });
+    });
+});
+
+describe("Prevent a spec from running by excluding it with xit", function() {
+    xit("this spec will not be run", function() {
+        expect(1).toBe(0);
+    });
+    it("but this one will", function() {
+        expect(1).not.toBe(0);
     });
 });
 
