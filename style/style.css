@@ -53,7 +53,7 @@ ul {
 .suite-failed {
     color: #f00;
 }
-.suite-hiden {
+.suite-hidden {
     display: none;
 }
 /* spec */
