@@ -1,7 +1,12 @@
 body {
-    margin: 52px 0 0 0;
+    margin: 52px 0 52px 0;
     font-size: 1em;
     font-family: sans-serif;
+}
+/* list tags */
+ul {
+    list-style: none;
+    padding-left: 20px;
 }
 /* summary info */
 .preamble-summary {
@@ -40,18 +45,16 @@ body {
 .preamble-summary-duration span {
     font-size: .75em;
 }
-ul {
-    list-style: none;
-    padding-left: 20px;
-}
 /* suite */
 .suite {
 }
-.suite-passed {
+.suite-passed a {
     color: #000;
+    text-decoration: none;
 }
-.suite-failed {
+.suite-failed a {
     color: #f00;
+    text-decoration: none;
 }
 .suite-hidden {
     display: none;
@@ -59,18 +62,45 @@ ul {
 /* spec */
 .spec {
 }
-.spec-passed {
+.spec-passed a {
     color: #0f0;
+    text-decoration: none;
 }
-.spec-failed {
+.spec-failed a {
     color: #f00;
+    text-decoration: none;
 }
 /* suite * spec */
-.suite-excluded,
-.spec-excluded {
+.suite-excluded a,
+.spec-excluded a {
     color: brown;
 }
 /* reason */
 .reason, .reason-stacktrace, .reason-stacktrace-item{
     color: #f00;
+}
+/* user interface test container */
+#preamble-ui-container {
+    position: absolute;
+    top: -10000px;
+    left: -10000px;
+    width: 1000px;
+    height: 1000px;
+}
+/* bottom page container */
+footer {
+    box-sizing: border-box;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    overflow: hidden;
+    padding: 8px 0;
+    border-top: solid 1px #bdbdbd;
+    text-align: center;
+    background-color: white;
+    color: #bdbdbd;
+}
+/* all anchor tags */
+a:hover {
+    text-decoration: underline;
 }
