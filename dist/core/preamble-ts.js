@@ -26,7 +26,7 @@ function afterEach(callback, timeoutInterval) {
 }
 exports.afterEach = afterEach;
 
-},{"../queue/AfterEach":14,"../stacktrace/StackTrace":21,"./callstack":3}],2:[function(require,module,exports){
+},{"../queue/AfterEach":14,"../stacktrace/StackTrace":23,"./callstack":3}],2:[function(require,module,exports){
 /**
  * Callable API
  * beforeEach(function([done]))
@@ -54,13 +54,13 @@ function beforeEach(callback, timeoutInterval) {
 }
 exports.beforeEach = beforeEach;
 
-},{"../queue/BeforeEach":15,"../stacktrace/StackTrace":21,"./callstack":3}],3:[function(require,module,exports){
+},{"../queue/BeforeEach":15,"../stacktrace/StackTrace":23,"./callstack":3}],3:[function(require,module,exports){
 "use strict";
 var CallStack_1 = require("../callstack/CallStack");
 var UniqueNumber_1 = require("../uniquenumber/UniqueNumber");
 exports.callStack = new CallStack_1.CallStack(new UniqueNumber_1.UniqueNumber());
 
-},{"../callstack/CallStack":8,"../uniquenumber/UniqueNumber":22}],4:[function(require,module,exports){
+},{"../callstack/CallStack":8,"../uniquenumber/UniqueNumber":24}],4:[function(require,module,exports){
 /**
  * Callable API
  * describe("description", callback)
@@ -77,6 +77,7 @@ function describe(label, callback) {
         throw new TypeError("describe called with invalid parameters");
     }
     // mark the Describe excluded if any of its parents are excluded
+    // TODO(js):
     excluded = callstack_1.callStack.stack.some(function (item) {
         return item.excluded;
     });
@@ -85,9 +86,11 @@ function describe(label, callback) {
     // push Describe onto the queue
     QueueManager_1.QueueManager.queue.push(_describe);
     // increment totDescribes count
-    QueueManager_1.QueueManager.totDescribes++;
+    QueueManager_1.QueueManager.bumpTotDescribesCount();
     // increment total excluded Describes if excluded
-    QueueManager_1.QueueManager.totExcDescribes = excluded && QueueManager_1.QueueManager.totExcDescribes + 1 || QueueManager_1.QueueManager.totExcDescribes;
+    if (excluded) {
+        QueueManager_1.QueueManager.bumpTotExcDescribesCount();
+    }
     // push Describe onto the callstack
     callstack_1.callStack.pushDescribe(_describe);
     // call callback to register the beforeEach, afterEach, it and describe calls
@@ -104,7 +107,7 @@ function describe(label, callback) {
 }
 exports.describe = describe;
 
-},{"../queue/Describe":16,"../queue/QueueManager":18,"./callstack":3}],5:[function(require,module,exports){
+},{"../queue/Describe":16,"../queue/QueueManager":19,"./callstack":3}],5:[function(require,module,exports){
 /**
  * Callable api
  * it("description", callback)
@@ -136,13 +139,15 @@ function it(label, callback, timeoutInterval) {
     // push It onto the queue
     QueueManager_1.QueueManager.queue.push(_it);
     // increment totIts count
-    QueueManager_1.QueueManager.totIts++;
+    QueueManager_1.QueueManager.bumpTotItsCount();
     // increment total excluded Its if excluded
-    QueueManager_1.QueueManager.totExclIts = excluded && QueueManager_1.QueueManager.totExclIts + 1 || QueueManager_1.QueueManager.totExclIts;
+    if (excluded) {
+        QueueManager_1.QueueManager.bumpTotExcItsCount();
+    }
 }
 exports.it = it;
 
-},{"../queue/It":17,"../queue/QueueManager":18,"../stacktrace/StackTrace":21,"./callstack":3}],6:[function(require,module,exports){
+},{"../queue/It":17,"../queue/QueueManager":19,"../stacktrace/StackTrace":23,"./callstack":3}],6:[function(require,module,exports){
 /**
  * Callable API
  * xdescribe("description", callback)
@@ -163,18 +168,12 @@ function xdescribe(label, callback) {
     }
     // a Description object
     _describe = new Describe_1.Describe(callstack_1.callStack.uniqueId.toString(), label, callback, callstack_1.callStack.length && callstack_1.callStack.getTopOfStack() || null, true);
-    // // push Describe onto the queue only if it is a top level Describe
-    // if (cs.length === 0) {
-    //     QueueManager.queue.push(_describe);
-    // } else {
-    //     cs.getTopOfStack().items.push(_describe);
-    // }
     // push Describe onto the queue
     QueueManager_1.QueueManager.queue.push(_describe);
     // increment totDescribes count
-    QueueManager_1.QueueManager.totDescribes++;
+    QueueManager_1.QueueManager.bumpTotDescribesCount();
     // increment totExcDescribes count
-    QueueManager_1.QueueManager.totExcDescribes++;
+    QueueManager_1.QueueManager.bumpTotExcDescribesCount();
     // push Describe object onto the callstack
     callstack_1.callStack.pushDescribe(_describe);
     // call callback to register the beforeEach, afterEach, it and describe calls
@@ -191,7 +190,7 @@ function xdescribe(label, callback) {
 }
 exports.xdescribe = xdescribe;
 
-},{"../queue/Describe":16,"../queue/QueueManager":18,"./callstack":3}],7:[function(require,module,exports){
+},{"../queue/Describe":16,"../queue/QueueManager":19,"./callstack":3}],7:[function(require,module,exports){
 /**
  * Callable api
  * xit("description", callback)
@@ -219,13 +218,13 @@ function xit(label, callback, timeoutInterval) {
     // push Describe onto the queue
     QueueManager_1.QueueManager.queue.push(_it);
     // Increment totIts count
-    QueueManager_1.QueueManager.totIts++;
+    QueueManager_1.QueueManager.bumpTotItsCount();
     // Increment totExclIts count
-    QueueManager_1.QueueManager.totExclIts++;
+    QueueManager_1.QueueManager.bumpTotExcItsCount();
 }
 exports.xit = xit;
 
-},{"../queue/It":17,"../queue/QueueManager":18,"../stacktrace/StackTrace":21,"./callstack":3}],8:[function(require,module,exports){
+},{"../queue/It":17,"../queue/QueueManager":19,"../stacktrace/StackTrace":23,"./callstack":3}],8:[function(require,module,exports){
 /**
  * CallStack
  */
@@ -322,7 +321,7 @@ else {
     nodeConfiguration();
 }
 
-},{"../../polyfills/Object.assign":24,"../environment/environment":10}],10:[function(require,module,exports){
+},{"../../polyfills/Object.assign":26,"../environment/environment":10}],10:[function(require,module,exports){
 /**
  * environment
  */
@@ -550,7 +549,7 @@ exports.registerMatcher = function (matcher) {
 };
 exports.matchersCount = function () { return expectationAPICount; };
 
-},{"../queue/QueueRunner":19,"../stacktrace/StackTrace":21,"./spy/spy":13}],13:[function(require,module,exports){
+},{"../queue/QueueRunner":20,"../stacktrace/StackTrace":23,"./spy/spy":13}],13:[function(require,module,exports){
 "use strict";
 var deeprecursiveequal_1 = require("../comparators/deeprecursiveequal");
 var QueueRunner_1 = require("../../queue/QueueRunner");
@@ -922,7 +921,7 @@ exports.spyOn.x = function (argObject, argPropertyNames) {
     });
 };
 
-},{"../../queue/QueueRunner":19,"../comparators/deeprecursiveequal":11}],14:[function(require,module,exports){
+},{"../../queue/QueueRunner":20,"../comparators/deeprecursiveequal":11}],14:[function(require,module,exports){
 "use strict";
 var AfterEach = (function () {
     function AfterEach(parent, id, callback, timeoutInterval, callStack) {
@@ -972,20 +971,10 @@ exports.Describe = Describe;
 
 },{}],17:[function(require,module,exports){
 "use strict";
+var hierarchy_1 = require("./hierarchy");
 /**
 * returns an It ancestor hierarchy
 */
-var getAncestorHierarchy = function (describe) {
-    var parent = describe;
-    var hierarchy = [];
-    // build ancestor hierarchy adding parent to the top of the hierarcy
-    while (parent) {
-        hierarchy.unshift(parent);
-        parent = parent.parent;
-    }
-    // return ancestor hierarchy
-    return hierarchy;
-};
 var It = (function () {
     function It(parent, id, label, callback, excluded, timeoutInterval, callStack) {
         if (excluded === void 0) { excluded = false; }
@@ -1000,14 +989,38 @@ var It = (function () {
         this.scope = {};
         this.isA = "It";
         this.passed = true;
-        this.hierarchy = getAncestorHierarchy(parent);
+        this.hierarchy = hierarchy_1.ancestorHierarchy(parent);
         this.reasons = [];
     }
     return It;
 }());
 exports.It = It;
 
-},{}],18:[function(require,module,exports){
+},{"./hierarchy":21}],18:[function(require,module,exports){
+"use strict";
+var hierarchy_1 = require("./hierarchy");
+/**
+ * Returns a subset of quueue that matches filter.
+ */
+function queueFilter(queue, filter) {
+    var hierarchy = [];
+    if (!filter.length) {
+        return queue;
+    }
+    // find the item whose id matches the filter and push it onto the hierarchy
+    queue.some(function (item) {
+        if (item.id === filter) {
+            hierarchy.push(item);
+            return true;
+        }
+    });
+    // find descendants and add them to the bottom of the hierarchy
+    [].push.apply(hierarchy, hierarchy_1.descendantHierarchy(queue, hierarchy[0]));
+    return hierarchy;
+}
+exports.queueFilter = queueFilter;
+
+},{"./hierarchy":21}],19:[function(require,module,exports){
 /**
  * QueueManager
  * Periodically checks the length of the queue.
@@ -1015,6 +1028,8 @@ exports.It = It;
  * signals that the queue is ready to be processed.
  */
 "use strict";
+;
+;
 var QueueManager = (function () {
     function QueueManager(timerInterval, stableRetryCount, Q /** see Note above */) {
         this.timerInterval = timerInterval;
@@ -1047,23 +1062,57 @@ var QueueManager = (function () {
         }, this.timerInterval);
         return deferred.promise;
     };
+    QueueManager.startTimer = function () {
+        QueueManager.queueManagerStats.timeKeeper.startTime = Date.now();
+    };
+    QueueManager.stopTimer = function () {
+        QueueManager.queueManagerStats.timeKeeper.endTime = Date.now();
+        QueueManager.queueManagerStats.timeKeeper.totTime =
+            QueueManager.queueManagerStats.timeKeeper.endTime -
+                QueueManager.queueManagerStats.timeKeeper.startTime;
+    };
+    QueueManager.bumpTotDescribesCount = function () {
+        QueueManager.queueManagerStats.totDescribes++;
+    };
+    QueueManager.bumpTotExcDescribesCount = function () {
+        QueueManager.queueManagerStats.totExcDescribes++;
+    };
+    QueueManager.bumpTotItsCount = function () {
+        QueueManager.queueManagerStats.totIts++;
+    };
+    QueueManager.bumpTotExcItsCount = function () {
+        QueueManager.queueManagerStats.totExcIts++;
+    };
+    QueueManager.bumpTotFailedItsCount = function () {
+        QueueManager.queueManagerStats.totFailedIts++;
+    };
     QueueManager.queue = [];
-    QueueManager.totDescribes = 0;
-    QueueManager.totExcDescribes = 0;
-    QueueManager.totIts = 0;
-    QueueManager.totExclIts = 0;
+    QueueManager.queueManagerStats = {
+        totDescribes: 0,
+        totExcDescribes: 0,
+        totIts: 0,
+        totExcIts: 0,
+        totFailedIts: 0,
+        timeKeeper: {
+            startTime: 0,
+            endTime: 0,
+            totTime: 0
+        }
+    };
     return QueueManager;
 }());
 exports.QueueManager = QueueManager;
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
+var QueueManager_1 = require("./QueueManager");
 require("../../polyfills/Object.assign"); // prevent eliding import
 // TODO(JS): Add .fail api to done???
 var QueueRunner = (function () {
-    function QueueRunner(queue, configTimeoutInterval, reportDispatch, Q) {
+    function QueueRunner(queue, configTimeoutInterval, queueManager, reportDispatch, Q) {
         this.queue = queue;
         this.configTimeoutInterval = configTimeoutInterval;
+        this.queueManager = queueManager;
         this.reportDispatch = reportDispatch;
         this.Q = Q;
     }
@@ -1246,9 +1295,7 @@ var QueueRunner = (function () {
     QueueRunner.prototype.run = function () {
         var _this = this;
         var deferred = this.Q.defer();
-        var its = this.queue.filter(function (element) {
-            return element.isA === "It";
-        });
+        var its = this.queue.filter(function (element) { return element.isA === "It"; });
         var it;
         // console.log("its", its);
         // recursive iterator
@@ -1263,10 +1310,15 @@ var QueueRunner = (function () {
                     }
                     else {
                         _this.runBIA(it).then(function () {
+                            if (!it.passed) {
+                                QueueManager_1.QueueManager.bumpTotFailedItsCount();
+                            }
+                            _this.reportDispatch.reportSummary();
                             _this.reportDispatch.reportSpec(it);
                             runner(++i);
                         }).fail(function () {
                             // an it timed out or one or more expectations failed
+                            _this.reportDispatch.reportSummary();
                             _this.reportDispatch.reportSpec(it);
                             runner(++i);
                         });
@@ -1286,20 +1338,62 @@ var QueueRunner = (function () {
 }());
 exports.QueueRunner = QueueRunner;
 
-},{"../../polyfills/Object.assign":24}],20:[function(require,module,exports){
+},{"../../polyfills/Object.assign":26,"./QueueManager":19}],21:[function(require,module,exports){
 "use strict";
+function ancestorHierarchy(item) {
+    var parent = item;
+    var hierarchy = [];
+    // build ancestor hierarchy adding parent to the top of the hierarcy
+    while (parent) {
+        hierarchy.unshift(parent);
+        parent = parent.parent;
+    }
+    // return ancestor hierarchy
+    return hierarchy;
+}
+exports.ancestorHierarchy = ancestorHierarchy;
+;
+function descendantHierarchy(queue, item) {
+    var child;
+    var hierarchy = [];
+    // returns an array of all queue items whose parent is aChild
+    var searchQueueForChidren = function (aChild) {
+        var t = [];
+        queue.forEach(function (item) {
+            if (item.parent && item.parent.id === aChild.id) {
+                t.push(item);
+            }
+        });
+        return t;
+    };
+    // buid descendant hierarchy adding children to the bottom of the hierarch
+    var buildHierarchy = function (item) {
+        hierarchy.push(item);
+        searchQueueForChidren(item).forEach(function (child) { return buildHierarchy(child); });
+    };
+    buildHierarchy(item);
+    return hierarchy;
+}
+exports.descendantHierarchy = descendantHierarchy;
+
+},{}],22:[function(require,module,exports){
+"use strict";
+// TODO(js): The QueueManager should be referenced internally to eliminate having to pass each method info from the queue.
 var ReportDispatch = (function () {
     function ReportDispatch() {
     }
     ReportDispatch.prototype.reportBegin = function (configOptions) {
+        this._configOptions = configOptions;
         this._reporters.forEach(function (report) { return report.reportBegin(configOptions); });
     };
-    ReportDispatch.prototype.reportSummary = function (summaryInfo) {
-        this._reporters.forEach(function (report) { return report.reportSummary(summaryInfo); });
+    ReportDispatch.prototype.reportSummary = function () {
+        var _this = this;
+        this._reporters.forEach(function (report) { return report.reportSummary(_this._queueManagerStats); });
     };
     ReportDispatch.prototype.reportSuite = function () {
     };
     ReportDispatch.prototype.reportSpec = function (it) {
+        // TODO(js): call reportSummary here to also update summary infor - this will require some refactoring because the QueueManager isn't referenced in this module.
         this._reporters.forEach(function (report) { return report.reportSpec(it); });
     };
     ReportDispatch.prototype.reportEnd = function () {
@@ -1311,12 +1405,19 @@ var ReportDispatch = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(ReportDispatch.prototype, "queueManagerStats", {
+        set: function (stats) {
+            this._queueManagerStats = stats;
+        },
+        enumerable: true,
+        configurable: true
+    });
     return ReportDispatch;
 }());
 exports.ReportDispatch = ReportDispatch;
 exports.reportDispatch = new ReportDispatch();
 
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
 var StackTrace = (function () {
     function StackTrace() {
@@ -1369,7 +1470,7 @@ var StackTrace = (function () {
 exports.StackTrace = StackTrace;
 exports.stackTrace = new StackTrace();
 
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /**
  * UniqueNumber
  *
@@ -1392,7 +1493,7 @@ var UniqueNumber = (function () {
 }());
 exports.UniqueNumber = UniqueNumber;
 
-},{}],23:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /**
  * Main entry point module
  */
@@ -1414,10 +1515,14 @@ var spy_1 = require("./core/expectations/spy/spy");
 var deeprecursiveequal_1 = require("./core/expectations/comparators/deeprecursiveequal");
 var expect_3 = require("./core/expectations/expect");
 var reportdispatch_1 = require("./core/reporters/reportdispatch");
+var QueueFilter_1 = require("./core/queue/QueueFilter");
 require("./core/configuration/configuration"); // prevent eliding import
+var pkgJSON = require("../package.json");
 var reporters;
 // turn on long stact support in Q
 Q.longStackSupport = true;
+// give reportDispatch access to the queuManager
+reportdispatch_1.reportDispatch.queueManagerStats = QueueManager_1.QueueManager.queueManagerStats;
 // Configure based on environment
 if (environment_1.environment.windows) {
     // add APIs used by suites to the window object
@@ -1442,6 +1547,7 @@ if (environment_1.environment.windows) {
         }
         // dispatch reportBegin to reporters
         reportdispatch_1.reportDispatch.reportBegin({
+            version: pkgJSON.version,
             uiTestContainerId: configuration_1.configuration.uiTestContainerId,
             name: configuration_1.configuration.name,
             hidePassedTests: configuration_1.configuration.hidePassedTests
@@ -1476,57 +1582,31 @@ if (environment_1.environment.windows) {
 else {
     throw new Error("Unsuported environment");
 }
-var timeKeeper = {
-    startTime: Date.now(),
-    endTime: 0,
-    totTime: 0
-};
+// the raw filter looks like "#spec_n" or "#suite_n" where n is some number
+var filter = window.location.hash.substring(window.location.hash.indexOf("_") + 1);
+console.log("filter =", filter);
 // dspatch reportSummary to all reporters
-reportdispatch_1.reportDispatch.reportSummary({
-    totDescribes: 0,
-    totExcDescribes: 0,
-    totIts: 0,
-    totFailedIts: 0,
-    totExcIts: 0,
-    name: configuration_1.configuration.name,
-    totTime: 0
-});
+reportdispatch_1.reportDispatch.reportSummary();
 // get a queue manager and call its run method to run the test suite
-new QueueManager_1.QueueManager(100, 2, Q)
-    .run()
+var queueManager = new QueueManager_1.QueueManager(100, 2, Q);
+QueueManager_1.QueueManager.startTimer();
+queueManager.run()
     .then(function (msg) {
     // fulfilled/success
     console.log(msg);
     console.log("QueueManager.queue =", QueueManager_1.QueueManager.queue);
     // dispatch reportSummary to all reporters
-    reportdispatch_1.reportDispatch.reportSummary({
-        totDescribes: QueueManager_1.QueueManager.totDescribes,
-        totExcDescribes: QueueManager_1.QueueManager.totExcDescribes,
-        totIts: QueueManager_1.QueueManager.totIts,
-        totFailedIts: 0,
-        totExcIts: QueueManager_1.QueueManager.totExclIts,
-        name: configuration_1.configuration.name,
-        totTime: 0
-    });
+    reportdispatch_1.reportDispatch.reportSummary();
     // run the queue
-    new QueueRunner_1.QueueRunner(QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, reportdispatch_1.reportDispatch, Q).run()
+    new QueueRunner_1.QueueRunner(filter && QueueFilter_1.queueFilter(QueueManager_1.QueueManager.queue, filter) || QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, queueManager, reportdispatch_1.reportDispatch, Q).run()
         .then(function () {
         var totFailedIts = QueueManager_1.QueueManager.queue.reduce(function (prev, curr) {
             return curr.isA === "It" && !curr.passed ? prev + 1 : prev;
         }, 0);
-        timeKeeper.endTime = Date.now();
-        timeKeeper.totTime = timeKeeper.endTime - timeKeeper.startTime;
-        console.log("queue ran successfully in " + timeKeeper.totTime + " miliseconds");
+        QueueManager_1.QueueManager.stopTimer();
+        console.log("queue ran successfully in " + QueueManager_1.QueueManager.queueManagerStats.timeKeeper.totTime + " miliseconds");
         // dispatch reportSummary to all reporters
-        reportdispatch_1.reportDispatch.reportSummary({
-            totDescribes: QueueManager_1.QueueManager.totDescribes,
-            totExcDescribes: QueueManager_1.QueueManager.totExcDescribes,
-            totIts: QueueManager_1.QueueManager.totIts,
-            totFailedIts: totFailedIts,
-            totExcIts: QueueManager_1.QueueManager.totExclIts,
-            name: configuration_1.configuration.name,
-            totTime: timeKeeper.totTime
-        });
+        reportdispatch_1.reportDispatch.reportSummary();
     }, function () {
         console.log("queue failed to run");
     });
@@ -1535,7 +1615,7 @@ new QueueManager_1.QueueManager(100, 2, Q)
     console.log(msg);
 });
 
-},{"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/spy/spy":13,"./core/queue/QueueManager":18,"./core/queue/QueueRunner":19,"./core/reporters/reportdispatch":20,"q":26}],24:[function(require,module,exports){
+},{"../package.json":29,"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/spy/spy":13,"./core/queue/QueueFilter":18,"./core/queue/QueueManager":19,"./core/queue/QueueRunner":20,"./core/reporters/reportdispatch":22,"q":28}],26:[function(require,module,exports){
 if (typeof Object.assign !== "function") {
     (function () {
         Object.assign = function (target) {
@@ -1559,7 +1639,7 @@ if (typeof Object.assign !== "function") {
     })();
 }
 
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1652,7 +1732,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],26:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -3704,4 +3784,25 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":25}]},{},[23]);
+},{"_process":27}],29:[function(require,module,exports){
+module.exports={
+  "name": "preamble-ts",
+  "version": "0.0.0-b0.1.0",
+  "description": "Preamble.ts the BDD test runner Reborn!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jeffrey Schwartz",
+  "license": "MIT",
+  "dependencies": {
+    "q": "^1.4.1"
+  },
+  "devDependencies": {
+    "browserify": "^13.0.0",
+    "gulp": "^3.9.1",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}
+
+},{}]},{},[25]);
