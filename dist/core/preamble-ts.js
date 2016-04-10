@@ -1003,20 +1003,19 @@ var hierarchy_1 = require("./hierarchy");
  * Returns a subset of quueue that matches filter.
  */
 function queueFilter(queue, filter) {
-    var hierarchy = [];
+    var target;
     if (!filter.length) {
         return queue;
     }
     // find the item whose id matches the filter and push it onto the hierarchy
     queue.some(function (item) {
         if (item.id === filter) {
-            hierarchy.push(item);
+            target = item;
             return true;
         }
     });
     // find descendants and add them to the bottom of the hierarchy
-    [].push.apply(hierarchy, hierarchy_1.descendantHierarchy(queue, hierarchy[0]));
-    return hierarchy;
+    return hierarchy_1.descendantHierarchy(queue, target);
 }
 exports.queueFilter = queueFilter;
 
