@@ -1358,8 +1358,11 @@ var hierarchy_1 = require("./hierarchy");
 /**
  * Returns a subset of quueue that matches filter.
  */
-function queueFilter(queue, filter) {
+function queueFilter(queue, queueManagerStats, filter) {
     var target;
+    var result;
+    var originalTotItCount = queueManagerStats.totIts;
+    var count = 0;
     if (!filter.length) {
         return queue;
     }
@@ -1370,7 +1373,18 @@ function queueFilter(queue, filter) {
             return true;
         }
     });
-    // find descendants and add them to the bottom of the hierarchy
+    // find descendants
+    result = hierarchy_1.descendantHierarchy(queue, target);
+    // set the queue's total its count
+    queueManagerStats.totIts = result.reduce(function (prev, curr) {
+        return curr.isA === "It" && prev + 1 || prev;
+    }, 0);
+    // set the queue's excluded count
+    queueManagerStats.totExcIts = result.reduce(function (prev, curr) {
+        return curr.isA === "It" && curr.excluded && prev + 1 || prev;
+    }, 0);
+    // set the queue's filtered count
+    queueManagerStats.totFiltered = originalTotItCount - queueManagerStats.totIts;
     return hierarchy_1.descendantHierarchy(queue, target);
 }
 exports.queueFilter = queueFilter;
@@ -1581,8 +1595,7 @@ if (environment_1.environment.windows) {
 else {
     throw new Error("Unsuported environment");
 }
-// the raw filter looks like "#spec_n" or "#suite_n" where n is some number
-// let filter = window.location.hash.substring(window.location.hash.indexOf("_") + 1);
+// the raw filter looks like "?filter=spec_n" or "?filter=suite_n" where n is some number
 var filter = window.location.search.substring(window.location.search.indexOf("_") + 1);
 console.log("filter =", filter);
 // dspatch reportSummary to all reporters
@@ -1598,7 +1611,7 @@ queueManager.run()
     // dispatch reportSummary to all reporters
     reportdispatch_1.reportDispatch.reportSummary();
     // run the queue
-    new QueueRunner_1.QueueRunner(filter && queueFilter_1.queueFilter(QueueManager_1.QueueManager.queue, filter) || QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, queueManager, reportdispatch_1.reportDispatch, Q).run()
+    new QueueRunner_1.QueueRunner(filter && queueFilter_1.queueFilter(QueueManager_1.QueueManager.queue, QueueManager_1.QueueManager.queueManagerStats, filter) || QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, queueManager, reportdispatch_1.reportDispatch, Q).run()
         .then(function () {
         var totFailedIts = QueueManager_1.QueueManager.queue.reduce(function (prev, curr) {
             return curr.isA === "It" && !curr.passed ? prev + 1 : prev;
