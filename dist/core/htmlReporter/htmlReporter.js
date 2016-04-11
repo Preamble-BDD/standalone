@@ -4,6 +4,7 @@ var summaryContainerId = "preamble-summary";
 var summaryStatsId = "preamble-summary-stats";
 var summaryDurationId = "preamble-summary-duration";
 var configOptions;
+var filtered = false;
 var createElement = function (tagName) {
     return document.createElement(tagName);
 };
@@ -51,9 +52,23 @@ var cssClass = function (item, isA) {
     return clazz;
 };
 var wrapWithAnchor = function (item) {
-    var notExcluded = "<a href=\"#" + id(item) + "\" onclick=\"window.location.hash = '#" + id(item) + "'; window.location.reload();\"><span>" + item.label + "</span></a>";
+    var loc = window.location;
+    var i = loc.href.indexOf("?");
+    var url = i && loc.href.substring(0, i) || loc.href;
+    url += "?filter=" + id(item);
+    var notExcluded = "<a href=\"" + url + "\"><span>" + item.label + "</span></a>";
     var excluded = "<span>" + item.label + "</span>";
     return item.excluded && excluded || notExcluded;
+};
+var runAll = function () {
+    var loc = window.location;
+    var i = loc.href.indexOf("?");
+    var url = i && loc.href.substring(0, i) || loc.href;
+    var ret = "";
+    if (filtered) {
+        ret = " - <a class=\"runall\" href=\"" + url + "\">run all</a>";
+    }
+    return ret;
 };
 var HtmlReporter = (function () {
     function HtmlReporter() {
@@ -72,6 +87,7 @@ var HtmlReporter = (function () {
     };
     HtmlReporter.prototype.reportBegin = function (confOpts) {
         configOptions = confOpts;
+        filtered = !!window.location.search.length;
         getTestContainer().insertAdjacentHTML("beforeend", "<footer>Preamble v" + confOpts.version + "</footer>");
     };
     HtmlReporter.prototype.reportSummary = function (summaryInfo) {
@@ -88,7 +104,7 @@ var HtmlReporter = (function () {
         }
         summaryEl.className = summaryInfo.totIts && summaryInfo.totFailedIts && "preamble-summary preamble-summary-fail" || summaryInfo.totIts && "preamble-summary preamble-summary-pass" || "preamble-summary preamble-summary-pending";
         summaryStatsEl = getElementById(summaryStatsId);
-        summaryStatsEl.innerHTML = "<span>" + configOptions.name + ": </span> <span>" + summaryInfo.totIts + "</span><b> specs</b>, <span>" + summaryInfo.totFailedIts + "</span><b> failures</b>, <span>" + summaryInfo.totExcIts + "</span><b> excluded</b>";
+        summaryStatsEl.innerHTML = "<span>" + configOptions.name + ": </span> <span>" + summaryInfo.totIts + "</span><b> specs</b>, <span>" + summaryInfo.totFailedIts + "</span><b> failures</b>, <span>" + summaryInfo.totExcIts + "</span><b> excluded</b>\n        <span><b> " + runAll() + "</b></span>";
         summaryDurationEl = getElementById(summaryDurationId);
         summaryDurationEl.innerHTML = "<span>completed in " + duration + "s </span>";
         summaryDurationEl.className = summaryInfo.timeKeeper.totTime === 0 && "preamble-summary-duration preamble-summary-duration-hidden" || "preamble-summary-duration";

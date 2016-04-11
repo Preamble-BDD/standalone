@@ -107,7 +107,7 @@ function describe(label, callback) {
 }
 exports.describe = describe;
 
-},{"../queue/Describe":16,"../queue/QueueManager":19,"./callstack":3}],5:[function(require,module,exports){
+},{"../queue/Describe":16,"../queue/QueueManager":18,"./callstack":3}],5:[function(require,module,exports){
 /**
  * Callable api
  * it("description", callback)
@@ -147,7 +147,7 @@ function it(label, callback, timeoutInterval) {
 }
 exports.it = it;
 
-},{"../queue/It":17,"../queue/QueueManager":19,"../stacktrace/StackTrace":23,"./callstack":3}],6:[function(require,module,exports){
+},{"../queue/It":17,"../queue/QueueManager":18,"../stacktrace/StackTrace":23,"./callstack":3}],6:[function(require,module,exports){
 /**
  * Callable API
  * xdescribe("description", callback)
@@ -190,7 +190,7 @@ function xdescribe(label, callback) {
 }
 exports.xdescribe = xdescribe;
 
-},{"../queue/Describe":16,"../queue/QueueManager":19,"./callstack":3}],7:[function(require,module,exports){
+},{"../queue/Describe":16,"../queue/QueueManager":18,"./callstack":3}],7:[function(require,module,exports){
 /**
  * Callable api
  * xit("description", callback)
@@ -224,7 +224,7 @@ function xit(label, callback, timeoutInterval) {
 }
 exports.xit = xit;
 
-},{"../queue/It":17,"../queue/QueueManager":19,"../stacktrace/StackTrace":23,"./callstack":3}],8:[function(require,module,exports){
+},{"../queue/It":17,"../queue/QueueManager":18,"../stacktrace/StackTrace":23,"./callstack":3}],8:[function(require,module,exports){
 /**
  * CallStack
  */
@@ -549,7 +549,7 @@ exports.registerMatcher = function (matcher) {
 };
 exports.matchersCount = function () { return expectationAPICount; };
 
-},{"../queue/QueueRunner":20,"../stacktrace/StackTrace":23,"./spy/spy":13}],13:[function(require,module,exports){
+},{"../queue/QueueRunner":19,"../stacktrace/StackTrace":23,"./spy/spy":13}],13:[function(require,module,exports){
 "use strict";
 var deeprecursiveequal_1 = require("../comparators/deeprecursiveequal");
 var QueueRunner_1 = require("../../queue/QueueRunner");
@@ -921,7 +921,7 @@ exports.spyOn.x = function (argObject, argPropertyNames) {
     });
 };
 
-},{"../../queue/QueueRunner":20,"../comparators/deeprecursiveequal":11}],14:[function(require,module,exports){
+},{"../../queue/QueueRunner":19,"../comparators/deeprecursiveequal":11}],14:[function(require,module,exports){
 "use strict";
 var AfterEach = (function () {
     function AfterEach(parent, id, callback, timeoutInterval, callStack) {
@@ -996,30 +996,7 @@ var It = (function () {
 }());
 exports.It = It;
 
-},{"./hierarchy":21}],18:[function(require,module,exports){
-"use strict";
-var hierarchy_1 = require("./hierarchy");
-/**
- * Returns a subset of quueue that matches filter.
- */
-function queueFilter(queue, filter) {
-    var target;
-    if (!filter.length) {
-        return queue;
-    }
-    // find the item whose id matches the filter and push it onto the hierarchy
-    queue.some(function (item) {
-        if (item.id === filter) {
-            target = item;
-            return true;
-        }
-    });
-    // find descendants and add them to the bottom of the hierarchy
-    return hierarchy_1.descendantHierarchy(queue, target);
-}
-exports.queueFilter = queueFilter;
-
-},{"./hierarchy":21}],19:[function(require,module,exports){
+},{"./hierarchy":20}],18:[function(require,module,exports){
 /**
  * QueueManager
  * Periodically checks the length of the queue.
@@ -1102,7 +1079,7 @@ var QueueManager = (function () {
 }());
 exports.QueueManager = QueueManager;
 
-},{}],20:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict";
 var QueueManager_1 = require("./QueueManager");
 require("../../polyfills/Object.assign"); // prevent eliding import
@@ -1337,7 +1314,7 @@ var QueueRunner = (function () {
 }());
 exports.QueueRunner = QueueRunner;
 
-},{"../../polyfills/Object.assign":26,"./QueueManager":19}],21:[function(require,module,exports){
+},{"../../polyfills/Object.assign":26,"./QueueManager":18}],20:[function(require,module,exports){
 "use strict";
 function ancestorHierarchy(item) {
     var parent = item;
@@ -1375,7 +1352,30 @@ function descendantHierarchy(queue, item) {
 }
 exports.descendantHierarchy = descendantHierarchy;
 
-},{}],22:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
+"use strict";
+var hierarchy_1 = require("./hierarchy");
+/**
+ * Returns a subset of quueue that matches filter.
+ */
+function queueFilter(queue, filter) {
+    var target;
+    if (!filter.length) {
+        return queue;
+    }
+    // find the item whose id matches the filter and push it onto the hierarchy
+    queue.some(function (item) {
+        if (item.id === filter) {
+            target = item;
+            return true;
+        }
+    });
+    // find descendants and add them to the bottom of the hierarchy
+    return hierarchy_1.descendantHierarchy(queue, target);
+}
+exports.queueFilter = queueFilter;
+
+},{"./hierarchy":20}],22:[function(require,module,exports){
 "use strict";
 // TODO(js): The QueueManager should be referenced internally to eliminate having to pass each method info from the queue.
 var ReportDispatch = (function () {
@@ -1514,7 +1514,7 @@ var spy_1 = require("./core/expectations/spy/spy");
 var deeprecursiveequal_1 = require("./core/expectations/comparators/deeprecursiveequal");
 var expect_3 = require("./core/expectations/expect");
 var reportdispatch_1 = require("./core/reporters/reportdispatch");
-var QueueFilter_1 = require("./core/queue/QueueFilter");
+var queueFilter_1 = require("./core/queue/queueFilter");
 require("./core/configuration/configuration"); // prevent eliding import
 var pkgJSON = require("../package.json");
 var reporters;
@@ -1582,7 +1582,8 @@ else {
     throw new Error("Unsuported environment");
 }
 // the raw filter looks like "#spec_n" or "#suite_n" where n is some number
-var filter = window.location.hash.substring(window.location.hash.indexOf("_") + 1);
+// let filter = window.location.hash.substring(window.location.hash.indexOf("_") + 1);
+var filter = window.location.search.substring(window.location.search.indexOf("_") + 1);
 console.log("filter =", filter);
 // dspatch reportSummary to all reporters
 reportdispatch_1.reportDispatch.reportSummary();
@@ -1597,7 +1598,7 @@ queueManager.run()
     // dispatch reportSummary to all reporters
     reportdispatch_1.reportDispatch.reportSummary();
     // run the queue
-    new QueueRunner_1.QueueRunner(filter && QueueFilter_1.queueFilter(QueueManager_1.QueueManager.queue, filter) || QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, queueManager, reportdispatch_1.reportDispatch, Q).run()
+    new QueueRunner_1.QueueRunner(filter && queueFilter_1.queueFilter(QueueManager_1.QueueManager.queue, filter) || QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, queueManager, reportdispatch_1.reportDispatch, Q).run()
         .then(function () {
         var totFailedIts = QueueManager_1.QueueManager.queue.reduce(function (prev, curr) {
             return curr.isA === "It" && !curr.passed ? prev + 1 : prev;
@@ -1614,7 +1615,7 @@ queueManager.run()
     console.log(msg);
 });
 
-},{"../package.json":29,"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/spy/spy":13,"./core/queue/QueueFilter":18,"./core/queue/QueueManager":19,"./core/queue/QueueRunner":20,"./core/reporters/reportdispatch":22,"q":28}],26:[function(require,module,exports){
+},{"../package.json":29,"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/spy/spy":13,"./core/queue/QueueManager":18,"./core/queue/QueueRunner":19,"./core/queue/queueFilter":21,"./core/reporters/reportdispatch":22,"q":28}],26:[function(require,module,exports){
 if (typeof Object.assign !== "function") {
     (function () {
         Object.assign = function (target) {
