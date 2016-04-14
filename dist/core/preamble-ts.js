@@ -26,7 +26,7 @@ function afterEach(callback, timeoutInterval) {
 }
 exports.afterEach = afterEach;
 
-},{"../queue/AfterEach":14,"../stacktrace/StackTrace":23,"./callstack":3}],2:[function(require,module,exports){
+},{"../queue/AfterEach":15,"../stacktrace/StackTrace":24,"./callstack":3}],2:[function(require,module,exports){
 /**
  * Callable API
  * beforeEach(function([done]))
@@ -54,13 +54,13 @@ function beforeEach(callback, timeoutInterval) {
 }
 exports.beforeEach = beforeEach;
 
-},{"../queue/BeforeEach":15,"../stacktrace/StackTrace":23,"./callstack":3}],3:[function(require,module,exports){
+},{"../queue/BeforeEach":16,"../stacktrace/StackTrace":24,"./callstack":3}],3:[function(require,module,exports){
 "use strict";
 var CallStack_1 = require("../callstack/CallStack");
 var UniqueNumber_1 = require("../uniquenumber/UniqueNumber");
 exports.callStack = new CallStack_1.CallStack(new UniqueNumber_1.UniqueNumber());
 
-},{"../callstack/CallStack":8,"../uniquenumber/UniqueNumber":24}],4:[function(require,module,exports){
+},{"../callstack/CallStack":8,"../uniquenumber/UniqueNumber":25}],4:[function(require,module,exports){
 /**
  * Callable API
  * describe("description", callback)
@@ -107,7 +107,7 @@ function describe(label, callback) {
 }
 exports.describe = describe;
 
-},{"../queue/Describe":16,"../queue/QueueManager":18,"./callstack":3}],5:[function(require,module,exports){
+},{"../queue/Describe":17,"../queue/QueueManager":19,"./callstack":3}],5:[function(require,module,exports){
 /**
  * Callable api
  * it("description", callback)
@@ -147,7 +147,7 @@ function it(label, callback, timeoutInterval) {
 }
 exports.it = it;
 
-},{"../queue/It":17,"../queue/QueueManager":18,"../stacktrace/StackTrace":23,"./callstack":3}],6:[function(require,module,exports){
+},{"../queue/It":18,"../queue/QueueManager":19,"../stacktrace/StackTrace":24,"./callstack":3}],6:[function(require,module,exports){
 /**
  * Callable API
  * xdescribe("description", callback)
@@ -190,7 +190,7 @@ function xdescribe(label, callback) {
 }
 exports.xdescribe = xdescribe;
 
-},{"../queue/Describe":16,"../queue/QueueManager":18,"./callstack":3}],7:[function(require,module,exports){
+},{"../queue/Describe":17,"../queue/QueueManager":19,"./callstack":3}],7:[function(require,module,exports){
 /**
  * Callable api
  * xit("description", callback)
@@ -224,7 +224,7 @@ function xit(label, callback, timeoutInterval) {
 }
 exports.xit = xit;
 
-},{"../queue/It":17,"../queue/QueueManager":18,"../stacktrace/StackTrace":23,"./callstack":3}],8:[function(require,module,exports){
+},{"../queue/It":18,"../queue/QueueManager":19,"../stacktrace/StackTrace":24,"./callstack":3}],8:[function(require,module,exports){
 /**
  * CallStack
  */
@@ -281,7 +281,7 @@ var CallStack = (function () {
 }());
 exports.CallStack = CallStack;
 
-},{"../queue/Describe":16}],9:[function(require,module,exports){
+},{"../queue/Describe":17}],9:[function(require,module,exports){
 /**
  * Environment Dependent Configuration
  */
@@ -321,7 +321,7 @@ else {
     nodeConfiguration();
 }
 
-},{"../../polyfills/Object.assign":26,"../environment/environment":10}],10:[function(require,module,exports){
+},{"../../polyfills/Object.assign":27,"../environment/environment":10}],10:[function(require,module,exports){
 /**
  * environment
  */
@@ -408,10 +408,11 @@ var compareArrays = function (a, b) {
 var spy_1 = require("./spy/spy");
 var QueueRunner_1 = require("../queue/QueueRunner");
 var StackTrace_1 = require("../stacktrace/StackTrace");
-var matchers = [];
 var expectationAPI = {};
 var expectationAPICount = 0;
 var negatedExpectationAPI = {};
+// add not api to expect api
+expectationAPI["not"] = negatedExpectationAPI;
 var note;
 /**
  * argChecker - checks that the matcher has the
@@ -484,15 +485,13 @@ var assignReason = function (note) {
         QueueRunner_1.currentIt.reasons.push({ reason: reason, stackTrace: note.stackTrace });
     }
 };
-// add not api to expect api
-expectationAPI["not"] = negatedExpectationAPI;
 // expect(value)
 exports.expect = function (ev) {
     // if a callback was returned then call it and use what it returns for the expected value
     var expectedValue = ev;
     // capture the stack trace here when expect is called.
     var st = StackTrace_1.stackTrace.stackTrace;
-    if (typeof (ev) === "function" && !ev.hasOwnProperty("_spyMaker")) {
+    if (typeof (ev) === "function" && !ev.hasOwnProperty("_spyMarker")) {
         var spy = spy_1.spyOn(ev).and.callActual();
         expectedValue = spy();
     }
@@ -549,10 +548,156 @@ exports.registerMatcher = function (matcher) {
 };
 exports.matchersCount = function () { return expectationAPICount; };
 
-},{"../queue/QueueRunner":19,"../stacktrace/StackTrace":23,"./spy/spy":13}],13:[function(require,module,exports){
+},{"../queue/QueueRunner":20,"../stacktrace/StackTrace":24,"./spy/spy":14}],13:[function(require,module,exports){
+/**
+ * Mock API
+ */
+"use strict";
+var spy_1 = require("./spy/spy");
+var QueueRunner_1 = require("../queue/QueueRunner");
+var StackTrace_1 = require("../stacktrace/StackTrace");
+var mockAPI = { not: {} };
+var mockAPICount = 0;
+var negatedMockAPI = {};
+;
+var registerMatcher = function (matcher) {
+    if (matcher.negator) {
+        mockAPI.not["not." + matcher.apiName] = function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i - 0] = arguments[_i];
+            }
+            return !matcher.evaluator.apply(null, args);
+        };
+    }
+    mockAPI[matcher.apiName] = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i - 0] = arguments[_i];
+        }
+        return matcher.evaluator.apply(null, args);
+    };
+};
+registerMatcher({
+    apiName: "toBeCalled",
+    api: function () { },
+    evaluator: function (expectedValue) { return expectedValue.calls.count() > 0; },
+    negator: true,
+    minArgs: 0,
+    maxArgs: 0
+});
+registerMatcher({
+    apiName: "toBeCalledWith",
+    api: function () {
+        var matcherValue = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            matcherValue[_i - 0] = arguments[_i];
+        }
+        return matcherValue;
+    },
+    evaluator: function (expectedValue, matcherValue) {
+        return expectedValue.calls.wasCalledWith.apply(null, matcherValue);
+    },
+    negator: true,
+    minArgs: 1,
+    maxArgs: -1
+});
+exports.mock = function () {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i - 0] = arguments[_i];
+    }
+    var st = StackTrace_1.stackTrace.stackTrace;
+    var aSpy = spy_1.spyOn.apply(null, args);
+    var _mock = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i - 0] = arguments[_i];
+        }
+        // when called _mock delegates its calls to the spy
+        aSpy.apply(null, args);
+    };
+    // mock api
+    var _mockProxy = _mock;
+    var apisToCall = [];
+    _mockProxy.and = {};
+    _mockProxy.and.expect = { it: { not: {} } };
+    _mockProxy.and.expect.it.toBeCalled = function () {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "toBeCalled", expectedValue: aSpy, matcherValue: null, result: null, exception: null, stackTrace: st }
+        });
+        return _mockProxy;
+    };
+    _mockProxy.and.expect.it.not.toBeCalled = function () {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toBeCalled", expectedValue: aSpy, matcherValue: null, result: null, exception: null, stackTrace: st }
+        });
+        return _mockProxy;
+    };
+    _mockProxy.and.expect.it.toBeCalledWith = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i - 0] = arguments[_i];
+        }
+        apisToCall.push({
+            args: args,
+            note: { it: QueueRunner_1.currentIt, apiName: "toBeCalledWith", expectedValue: aSpy, matcherValue: args, result: null, exception: null, stackTrace: st }
+        });
+        return _mockProxy;
+    };
+    _mockProxy.and.expect.it.not.toBeCalledWith = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i - 0] = arguments[_i];
+        }
+        apisToCall.push({
+            args: args,
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toBeCalledWith", expectedValue: aSpy, matcherValue: args, result: null, exception: null, stackTrace: st }
+        });
+        return _mockProxy;
+    };
+    _mockProxy.and.expect.it.toBeCalledWithContext;
+    _mockProxy.and.expect.it.toReturn;
+    _mockProxy.and.expect.it.toThrow;
+    _mockProxy.and.expect.it.toThrowWithName;
+    _mockProxy.and.expect.it.toThrowWithMessage;
+    // mock validtation
+    _mockProxy.validate = function () {
+        apisToCall.forEach(function (apiToCall) {
+            var negated = /not\./.test(apiToCall.note.apiName);
+            var reason;
+            if (apiToCall.args) {
+                apiToCall.note.result = negated ?
+                    mockAPI.not[apiToCall.note.apiName](apiToCall.note.expectedValue, apiToCall.note.matcherValue) :
+                    mockAPI[apiToCall.note.apiName](apiToCall.note.expectedValue, apiToCall.note.matcherValue);
+            }
+            else {
+                apiToCall.note.result = negated ?
+                    mockAPI.not[apiToCall.note.apiName](apiToCall.note.expectedValue) :
+                    mockAPI[apiToCall.note.apiName](apiToCall.note.expectedValue);
+            }
+            QueueRunner_1.currentIt.passed = apiToCall.note.result && QueueRunner_1.currentIt.passed || false;
+            QueueRunner_1.currentIt.parent.passed = apiToCall.note.result && QueueRunner_1.currentIt.passed || false;
+            QueueRunner_1.currentIt.expectations.push(apiToCall.note);
+            if (!apiToCall.note.result) {
+                if (apiToCall.note.matcherValue) {
+                    reason = "mock().and.expect.it." + apiToCall.note.apiName + "(" + apiToCall.note.matcherValue + ") failed!";
+                }
+                else {
+                    reason = "mock().and.expect.it." + apiToCall.note.apiName + "() failed!";
+                }
+                QueueRunner_1.currentIt.reasons.push({ reason: reason, stackTrace: apiToCall.note.stackTrace });
+            }
+        });
+    };
+    return _mockProxy;
+};
+// test api here
+// let aMock = mock().and.expect.it.toBeCalled();
+
+},{"../queue/QueueRunner":20,"../stacktrace/StackTrace":24,"./spy/spy":14}],14:[function(require,module,exports){
 "use strict";
 var deeprecursiveequal_1 = require("../comparators/deeprecursiveequal");
-var QueueRunner_1 = require("../../queue/QueueRunner");
 // args API
 var Args = (function () {
     function Args(args) {
@@ -591,7 +736,6 @@ var ACall = (function () {
     return ACall;
 }());
 exports.ACall = ACall;
-// (argsObject, argProperty)
 exports.spyOn = function () {
     var args = [];
     for (var _i = 0; _i < arguments.length; _i++) {
@@ -650,11 +794,10 @@ exports.spyOn = function () {
         if (!spy._callActual) {
             returned = spy._returns || returned;
         }
-        //  spy.args = new Args(aArgs);
         calls.push(new ACall(spy._callWithContext || this, new Args(aArgs), error, returned));
         return returned;
     };
-    spy._spyMaker = "preamble.spy";
+    spy._spyMarker = "preamble.spy";
     // stub api
     spy._throws = false;
     spy._throwsMessage = "";
@@ -669,7 +812,6 @@ exports.spyOn = function () {
         spy._throwsName = "";
         spy._callWithContext = null;
         spy._hasExpectations = false;
-        spy._expectations = {};
         return spy;
     };
     spy._callWithContext = null;
@@ -786,94 +928,6 @@ exports.spyOn = function () {
             });
         }
     };
-    // mock api
-    spy._hasExpectations = false;
-    spy._expectations = {};
-    spy.and.expect = {
-        it: {}
-    };
-    spy.and.expect.it.toBeCalled = function () {
-        spy._hasExpectations = true;
-        spy._expectations.toBeCalled = true;
-        return spy;
-    };
-    spy.and.expect.it.toBeCalledWith = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i - 0] = arguments[_i];
-        }
-        spy._hasExpectations = true;
-        spy._expectations.toBeCalledWith = args;
-        return spy;
-    };
-    spy.and.expect.it.toBeCalledWithContext = function (obj) {
-        spy._hasExpectations = true;
-        spy._expectations.toBeCalledWithContext = obj;
-        return spy;
-    };
-    spy.and.expect.it.toReturn = function (value) {
-        spy._hasExpectations = true;
-        spy._expectations.toReturnValue = value;
-        return spy;
-    };
-    spy.and.expect.it.toThrow = function () {
-        spy._hasExpectations = true;
-        spy._expectations.toThrow = true;
-        return spy;
-    };
-    spy.and.expect.it.toThrowWithName = function (name) {
-        spy._hasExpectations = true;
-        spy._expectations.toThrowWithName = name;
-        return spy;
-    };
-    spy.and.expect.it.toThrowWithMessage = function (message) {
-        spy._hasExpectations = true;
-        spy._expectations.toThrowWithMessage = message;
-        return spy;
-    };
-    spy.validate = function () {
-        var noteMockExpectation = function (apiName, evaluator, matcherValue) {
-            var note = {
-                it: QueueRunner_1.currentIt,
-                apiName: apiName,
-                expectedValue: spy,
-                matcherValue: matcherValue || null,
-                result: null,
-                exception: null,
-                stackTrace: null
-            };
-            try {
-                note.result = evaluator();
-            }
-            catch (error) {
-                note.exception = error;
-            }
-            // TODO(js): assign reason for failure here once it is working with the expect api.
-            QueueRunner_1.currentIt.expectations.push(note);
-            console.log("note", note);
-        };
-        if (spy._hasExpectations && spy._expectations.toBeCalled) {
-            noteMockExpectation("mock.toBeCalled", function () { return spy.calls.count() > 0; });
-        }
-        if (spy._hasExpectations && spy._expectations.toBeCalledWith) {
-            noteMockExpectation("mock.toBeCalledWith", function () { return spy.calls.wasCalledWith.apply(null, spy._expectations.toBeCalledWith); }, spy._expectations.toBeCalledWith);
-        }
-        if (spy._hasExpectations && spy._expectations.toBeCalledWithContext) {
-            noteMockExpectation("mock.toBeCalledWithContext", function () { return spy.calls.wasCalledWithContext(spy._expectations.toBeCalledWithContext); }, spy._expectations.toBeCalledWith);
-        }
-        if (spy._hasExpectations && spy._expectations.toReturnValue) {
-            noteMockExpectation("mock.toReturnValue", function () { return spy.calls.returned(spy._expectations.toReturnValue); }, spy._expectations.toReturnValue);
-        }
-        if (spy._hasExpectations && spy._expectations.toThrow) {
-            noteMockExpectation("mock.toThrow", function () { return spy.calls.threw(); });
-        }
-        if (spy._hasExpectations && spy._expectations.toThrowWithName) {
-            noteMockExpectation("mock.toThrowWithName", function () { return spy.calls.threwWithName(spy._expectations.toThrowWithName); }, spy._expectations.toThrowWithName);
-        }
-        if (spy._hasExpectations && spy._expectations.toThrowWithMessage) {
-            noteMockExpectation("mock.toThrowWithMessage", function () { return spy.calls.threwWithMessage(spy._expectations.toThrowWithMessage); }, spy._expectations.toThrowWithMessage);
-        }
-    };
     if (args.length && typeof (args[0]) !== "function" &&
         typeof (args[0]) === "object") {
         args[0][args[1]] = spy;
@@ -921,7 +975,7 @@ exports.spyOn.x = function (argObject, argPropertyNames) {
     });
 };
 
-},{"../../queue/QueueRunner":19,"../comparators/deeprecursiveequal":11}],14:[function(require,module,exports){
+},{"../comparators/deeprecursiveequal":11}],15:[function(require,module,exports){
 "use strict";
 var AfterEach = (function () {
     function AfterEach(parent, id, callback, timeoutInterval, callStack) {
@@ -935,7 +989,7 @@ var AfterEach = (function () {
 }());
 exports.AfterEach = AfterEach;
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 var BeforeEach = (function () {
     function BeforeEach(parent, id, callback, timeoutInterval, callStack) {
@@ -949,7 +1003,7 @@ var BeforeEach = (function () {
 }());
 exports.BeforeEach = BeforeEach;
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 var Describe = (function () {
     function Describe(id, label, callback, parent, excluded) {
@@ -969,7 +1023,7 @@ var Describe = (function () {
 }());
 exports.Describe = Describe;
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 var hierarchy_1 = require("./hierarchy");
 /**
@@ -996,7 +1050,7 @@ var It = (function () {
 }());
 exports.It = It;
 
-},{"./hierarchy":20}],18:[function(require,module,exports){
+},{"./hierarchy":21}],19:[function(require,module,exports){
 /**
  * QueueManager
  * Periodically checks the length of the queue.
@@ -1079,7 +1133,7 @@ var QueueManager = (function () {
 }());
 exports.QueueManager = QueueManager;
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
 var QueueManager_1 = require("./QueueManager");
 require("../../polyfills/Object.assign"); // prevent eliding import
@@ -1314,7 +1368,7 @@ var QueueRunner = (function () {
 }());
 exports.QueueRunner = QueueRunner;
 
-},{"../../polyfills/Object.assign":26,"./QueueManager":18}],20:[function(require,module,exports){
+},{"../../polyfills/Object.assign":27,"./QueueManager":19}],21:[function(require,module,exports){
 "use strict";
 function ancestorHierarchy(item) {
     var parent = item;
@@ -1352,7 +1406,7 @@ function descendantHierarchy(queue, item) {
 }
 exports.descendantHierarchy = descendantHierarchy;
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 "use strict";
 var hierarchy_1 = require("./hierarchy");
 /**
@@ -1389,7 +1443,7 @@ function queueFilter(queue, queueManagerStats, filter) {
 }
 exports.queueFilter = queueFilter;
 
-},{"./hierarchy":20}],22:[function(require,module,exports){
+},{"./hierarchy":21}],23:[function(require,module,exports){
 "use strict";
 // TODO(js): The QueueManager should be referenced internally to eliminate having to pass each method info from the queue.
 var ReportDispatch = (function () {
@@ -1430,7 +1484,7 @@ var ReportDispatch = (function () {
 exports.ReportDispatch = ReportDispatch;
 exports.reportDispatch = new ReportDispatch();
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 "use strict";
 var StackTrace = (function () {
     function StackTrace() {
@@ -1483,7 +1537,7 @@ var StackTrace = (function () {
 exports.StackTrace = StackTrace;
 exports.stackTrace = new StackTrace();
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /**
  * UniqueNumber
  *
@@ -1506,7 +1560,7 @@ var UniqueNumber = (function () {
 }());
 exports.UniqueNumber = UniqueNumber;
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /**
  * Main entry point module
  */
@@ -1525,6 +1579,7 @@ var configuration_1 = require("./core/configuration/configuration");
 var expect_1 = require("./core/expectations/expect");
 var expect_2 = require("./core/expectations/expect");
 var spy_1 = require("./core/expectations/spy/spy");
+var mock_1 = require("./core/expectations/mock");
 var deeprecursiveequal_1 = require("./core/expectations/comparators/deeprecursiveequal");
 var expect_3 = require("./core/expectations/expect");
 var reportdispatch_1 = require("./core/reporters/reportdispatch");
@@ -1547,6 +1602,7 @@ if (environment_1.environment.windows) {
     window["afterEach"] = afterEach_1.afterEach;
     window["expect"] = expect_1.expect;
     window["spyOn"] = spy_1.spyOn;
+    window["mock"] = mock_1.mock;
     if (window.hasOwnProperty("preamble")) {
         // add reporter plugin
         if (window["preamble"].hasOwnProperty("reporters")) {
@@ -1628,7 +1684,7 @@ queueManager.run()
     console.log(msg);
 });
 
-},{"../package.json":29,"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/spy/spy":13,"./core/queue/QueueManager":18,"./core/queue/QueueRunner":19,"./core/queue/queueFilter":21,"./core/reporters/reportdispatch":22,"q":28}],26:[function(require,module,exports){
+},{"../package.json":30,"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/mock":13,"./core/expectations/spy/spy":14,"./core/queue/QueueManager":19,"./core/queue/QueueRunner":20,"./core/queue/queueFilter":22,"./core/reporters/reportdispatch":23,"q":29}],27:[function(require,module,exports){
 if (typeof Object.assign !== "function") {
     (function () {
         Object.assign = function (target) {
@@ -1652,7 +1708,7 @@ if (typeof Object.assign !== "function") {
     })();
 }
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1745,7 +1801,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -3797,7 +3853,7 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":27}],29:[function(require,module,exports){
+},{"_process":28}],30:[function(require,module,exports){
 module.exports={
   "name": "preamble-ts",
   "version": "0.0.0-b0.1.0",
@@ -3818,4 +3874,4 @@ module.exports={
   }
 }
 
-},{}]},{},[25]);
+},{}]},{},[26]);
