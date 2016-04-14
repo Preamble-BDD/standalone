@@ -61,27 +61,10 @@ declare function expect(ev: any): {
         toBeInstanceOf(matcherValue: any): any;
     }
 };
-
 declare function spyOn(...args): Spy;
-
 declare interface StaticSpy {
     (...args): any;
 }
-
-declare interface It {
-    toBeCalled: () => Spy;
-    toBeCalledWith: (...args) => Spy;
-    toBeCalledWithContext: (context: {}) => Spy;
-    toReturn: (value: any) => Spy;
-    toThrow: () => Spy;
-    toThrowWithName: (name: string) => Spy;
-    toThrowWithMessage: (message: string) => Spy;
-}
-
-declare interface Expect {
-    it: It;
-}
-
 declare interface And {
     reset: () => Spy;
     callWithContext: (context: {}) => Spy;
@@ -92,19 +75,7 @@ declare interface And {
     callFake: (fn: (...args) => any) => Spy;
     callActual: () => Spy;
     callStub: () => Spy;
-    expect: Expect;
 }
-
-declare interface Expectations {
-    toBeCalled: boolean;
-    toBeCalledWith: any[];
-    toBeCalledWithContext: {};
-    toReturn: any;
-    toThrow: boolean;
-    toThrowWithName: string;
-    toThrowWithMessage: string;
-}
-
 declare interface Calls {
     count: () => number;
     forCall: (i: number) => ACall;
@@ -116,7 +87,6 @@ declare interface Calls {
     threwWithName: (name: string) => boolean;
     threwWithMessage: (message: string) => boolean;
 }
-
 declare interface Spy extends StaticSpy {
     _spyMaker: string;
     _returns: any;
@@ -130,18 +100,14 @@ declare interface Spy extends StaticSpy {
     and: And;
     calls: Calls;
     validate: () => void;
-    _expectations: Expectations;
     _resetCalls: () => void;
 }
-
 declare interface SpyOnStatic {
     (...args): Spy;
 }
-
 declare interface SpyOn extends SpyOnStatic {
     x: (argObject: {}, argPropertyNames: string[]) => void;
 }
-
 // args API
 declare class Args {
     args: any[];
@@ -152,7 +118,6 @@ declare class Args {
     hasArgProperty: (i: number, propertyName: string) => boolean;
     getArgProperty: (i: number, propertyName: string) => string;
 }
-
 declare class ACall {
     constructor(context: {}, args: Args, error: Error, returned: any);
     getContext: () => {};
@@ -164,4 +129,42 @@ declare class ACall {
     hasArg: (i: number) => boolean;
     getError: () => Error;
     getReturned: () => any;
+}
+declare function mock(...args): MockProxy;
+declare function validate(): void;
+declare interface MockStatic {
+    (...args: any[]): MockProxy;
+}
+declare interface MockProxyStatic {
+    (...args): void;
+}
+declare interface MockProxy extends MockProxyStatic {
+    and: And;
+    validate: () => void;
+}
+declare interface And {
+    expect: Expect;
+}
+declare interface Expect {
+    it: It;
+}
+declare interface It {
+    toBeCalled: () => MockProxy;
+    toBeCalledWith: (...args) => MockProxy;
+    toBeCalledWithContext: (context: {}) => Spy;
+    toReturn: (value: any) => Spy;
+    toThrow: () => Spy;
+    toThrowWithName: (name: string) => Spy;
+    toThrowWithMessage: (message: string) => Spy;
+    not: Not;
+}
+
+declare interface Not {
+    toBeCalled: () => MockProxy;
+    toBeCalledWith: (...args) => MockProxy;
+    toBeCalledWithContext: (context: {}) => Spy;
+    toReturn: (value: any) => Spy;
+    toThrow: () => Spy;
+    toThrowWithName: (name: string) => Spy;
+    toThrowWithMessage: (message: string) => Spy;
 }
