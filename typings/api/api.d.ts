@@ -130,41 +130,56 @@ declare class ACall {
     getError: () => Error;
     getReturned: () => any;
 }
-declare function mock(...args): MockProxy;
+declare function mock(...args): Mock;
 declare function validate(): void;
 declare interface MockStatic {
-    (...args: any[]): MockProxy;
+    (...args: any[]): Mock;
 }
+
 declare interface MockProxyStatic {
     (...args): void;
 }
-declare interface MockProxy extends MockProxyStatic {
-    and: And;
+
+declare interface Mock extends MockProxyStatic {
+    and: MockAnd;
     validate: () => void;
 }
-declare interface And {
-    expect: Expect;
-}
-declare interface Expect {
-    it: It;
-}
-declare interface It {
-    toBeCalled: () => MockProxy;
-    toBeCalledWith: (...args) => MockProxy;
-    toBeCalledWithContext: (context: {}) => Spy;
-    toReturn: (value: any) => Spy;
-    toThrow: () => Spy;
-    toThrowWithName: (name: string) => Spy;
-    toThrowWithMessage: (message: string) => Spy;
-    not: Not;
+
+declare interface MockAnd {
+    expect: MockExpect;
+    // since a mock is also a spy, these methods delegate to the spy property
+    reset: () => Mock;
+    callWithContext: (context: {}) => Mock;
+    throw: () => Mock;
+    throwWithMessage: (message: string) => Mock;
+    throwWithName: (name: string) => Mock;
+    return: (ret: any) => Mock;
+    callFake: (fn: (...args) => any) => Mock;
+    callActual: () => Mock;
+    callStub: () => Mock;
 }
 
-declare interface Not {
-    toBeCalled: () => MockProxy;
-    toBeCalledWith: (...args) => MockProxy;
-    toBeCalledWithContext: (context: {}) => Spy;
-    toReturn: (value: any) => Spy;
-    toThrow: () => Spy;
-    toThrowWithName: (name: string) => Spy;
-    toThrowWithMessage: (message: string) => Spy;
+declare interface MockExpect {
+    it: MockIt;
+}
+
+declare interface MockIt {
+    toBeCalled: () => Mock;
+    toBeCalledWith: (...args) => Mock;
+    toBeCalledWithContext: (context: {}) => Mock;
+    toReturnValue: (value: any) => Mock;
+    toThrow: () => Mock;
+    toThrowWithName: (name: string) => Mock;
+    toThrowWithMessage: (message: string) => Mock;
+    not: MockNot;
+}
+
+declare interface MockNot {
+    toBeCalled: () => Mock;
+    toBeCalledWith: (...args) => Mock;
+    toBeCalledWithContext: (context: {}) => Mock;
+    toReturnValue: (value: any) => Mock;
+    toThrow: () => Mock;
+    toThrowWithName: (name: string) => Mock;
+    toThrowWithMessage: (message: string) => Mock;
 }
