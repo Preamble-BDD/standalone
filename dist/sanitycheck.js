@@ -314,9 +314,9 @@ describe("Calling calls.wasCalledWithContext(object)", function () {
         var someObj = {
             someFn: function () { }
         };
-        spyOn(someObj, "someFn");
+        var spy = spyOn(someObj, "someFn");
         someObj.someFn();
-        expect(someObj.someFn.calls.wasCalledWithContext(someObj)).toBeTrue();
+        expect(spy.calls.wasCalledWithContext(someObj)).toBeTrue();
     });
 });
 describe("Calling calls.returned(value)", function () {
@@ -324,9 +324,9 @@ describe("Calling calls.returned(value)", function () {
         var someObj = {
             someFn: function (num) { return num; }
         };
-        spyOn(someObj, "someFn").and.callActual();
+        var spy = spyOn(someObj, "someFn").and.callActual();
         someObj.someFn(123);
-        expect(someObj.someFn.calls.returned(123)).toBeTrue();
+        expect(spy.calls.returned(123)).toBeTrue();
     });
 });
 describe("Calling calls.threw()", function () {
@@ -364,19 +364,24 @@ describe("Calling calls.forCall(i).getContext()", function () {
         var someObject = {
             someFn: function () { }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn();
-        expect(someObject.someFn.calls.forCall(0).getContext()).toEqual(someObject);
+        expect(spy.calls.forCall(0).getContext()).toEqual(someObject);
     });
 });
 describe("Calling calls.forCall(i).getArgs()", function () {
     it("Returns an Args object for a specific call to the spy", function () {
         var someObject = {
-            someFn: function () { }
+            someFn: function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i - 0] = arguments[_i];
+                }
+            }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn(123);
-        expect(someObject.someFn.calls.forCall(0).getArgs().args).toEqual([123]);
+        expect(spy.calls.forCall(0).getArgs().args).toEqual([123]);
     });
 });
 describe("Calling calls.forCall(i).getArg(nth)", function () {
@@ -384,20 +389,25 @@ describe("Calling calls.forCall(i).getArg(nth)", function () {
         var someObject = {
             someFn: function (a, b) { }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn(123, 456);
-        expect(someObject.someFn.calls.forCall(0).getArg(0)).toEqual(123);
-        expect(someObject.someFn.calls.forCall(0).getArg(1)).toEqual(456);
+        expect(spy.calls.forCall(0).getArg(0)).toEqual(123);
+        expect(spy.calls.forCall(0).getArg(1)).toEqual(456);
     });
 });
 describe("Calling calls.forCall(i).getArgsLength()", function () {
     it("works like arguments.length for a specific call to the spy", function () {
         var someObject = {
-            someFn: function () { }
+            someFn: function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i - 0] = arguments[_i];
+                }
+            }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn(123, 456);
-        expect(someObject.someFn.calls.forCall(0).getArgsLength()).toEqual(2);
+        expect(spy.calls.forCall(0).getArgsLength()).toEqual(2);
     });
 });
 describe("Calling calls.forCall(i).getProperty(nth, propertyName)", function () {
@@ -405,10 +415,10 @@ describe("Calling calls.forCall(i).getProperty(nth, propertyName)", function () 
         var someObject = {
             someFn: function (name) { }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn({ fName: "Abraham", lName: "Lincoln" });
-        expect(someObject.someFn.calls.forCall(0).getArgProperty(0, "fName")).toEqual("Abraham");
-        expect(someObject.someFn.calls.forCall(0).getArgProperty(0, "lName")).toEqual("Lincoln");
+        expect(spy.calls.forCall(0).getArgProperty(0, "fName")).toEqual("Abraham");
+        expect(spy.calls.forCall(0).getArgProperty(0, "lName")).toEqual("Lincoln");
     });
 });
 describe("Calling calls.forCall(i).hasArgProperty(nth, propertyName)", function () {
@@ -416,22 +426,27 @@ describe("Calling calls.forCall(i).hasArgProperty(nth, propertyName)", function 
         var someObject = {
             someFn: function (name) { }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn({ fName: "Abraham", lName: "Lincoln" });
-        expect(someObject.someFn.calls.forCall(0).hasArgProperty(0, "fName")).toBeTrue();
-        expect(someObject.someFn.calls.forCall(0).hasArgProperty(0, "lName")).toBeTrue();
-        expect(someObject.someFn.calls.forCall(0).hasArgProperty(0, "address")).not.toBeTrue();
+        expect(spy.calls.forCall(0).hasArgProperty(0, "fName")).toBeTrue();
+        expect(spy.calls.forCall(0).hasArgProperty(0, "lName")).toBeTrue();
+        expect(spy.calls.forCall(0).hasArgProperty(0, "address")).not.toBeTrue();
     });
 });
 describe("Calling calls.forCall(i).hasArg(n)", function () {
     it("works like !!arguments[nth] for a specific call to the spy", function () {
         var someObject = {
-            someFn: function () { }
+            someFn: function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i - 0] = arguments[_i];
+                }
+            }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn("123", 123);
-        expect(someObject.someFn.calls.forCall(0).hasArg(0)).toBeTrue();
-        expect(someObject.someFn.calls.forCall(0).hasArg(1)).toBeTrue();
+        expect(spy.calls.forCall(0).hasArg(0)).toBeTrue();
+        expect(spy.calls.forCall(0).hasArg(1)).toBeTrue();
     });
 });
 describe("Calling calls.forCall(i).getError()", function () {
@@ -439,9 +454,9 @@ describe("Calling calls.forCall(i).getError()", function () {
         var someObject = {
             someFn: function () { }
         };
-        spyOn(someObject, "someFn").and.throw();
+        var spy = spyOn(someObject, "someFn").and.throw();
         someObject.someFn();
-        expect(someObject.someFn.calls.forCall(0).getError()).toBeTruthy();
+        expect(spy.calls.forCall(0).getError()).toBeTruthy();
     });
 });
 describe("Calling calls.forCall(i).getReturned()", function () {
@@ -449,9 +464,9 @@ describe("Calling calls.forCall(i).getReturned()", function () {
         var someObject = {
             someFn: function (n) { return n + 1; }
         };
-        spyOn(someObject, "someFn").and.callActual();
+        var spy = spyOn(someObject, "someFn").and.callActual();
         someObject.someFn(123);
-        expect(someObject.someFn.calls.forCall(0).getReturned()).toEqual(124);
+        expect(spy.calls.forCall(0).getReturned()).toEqual(124);
     });
 });
 describe("Calling calls.forCall(i).getArgs().getLength()", function () {

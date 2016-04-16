@@ -355,9 +355,9 @@ describe(`Calling calls.wasCalledWithContext(object)`, function() {
         let someObj = {
             someFn: function() { }
         };
-        spyOn(someObj, "someFn");
+        let spy = spyOn(someObj, "someFn");
         someObj.someFn();
-        expect((<Spy>someObj.someFn).calls.wasCalledWithContext(someObj)).toBeTrue();
+        expect(spy.calls.wasCalledWithContext(someObj)).toBeTrue();
     });
 });
 
@@ -366,9 +366,9 @@ describe(`Calling calls.returned(value)`, function() {
         let someObj = {
             someFn: function(num) { return num; }
         };
-        spyOn(someObj, "someFn").and.callActual();
+        let spy = spyOn(someObj, "someFn").and.callActual();
         someObj.someFn(123);
-        expect((<Spy>someObj.someFn).calls.returned(123)).toBeTrue();
+        expect(spy.calls.returned(123)).toBeTrue();
     });
 });
 
@@ -411,20 +411,20 @@ describe(`Calling calls.forCall(i).getContext()`, function() {
         let someObject = {
             someFn: function() { }
         };
-        spyOn(someObject, "someFn");
+        let spy = spyOn(someObject, "someFn");
         someObject.someFn();
-        expect((<Spy>someObject.someFn).calls.forCall(0).getContext()).toEqual(someObject);
+        expect(spy.calls.forCall(0).getContext()).toEqual(someObject);
     });
 });
 
 describe(`Calling calls.forCall(i).getArgs()`, function() {
     it(`Returns an Args object for a specific call to the spy`, function() {
         let someObject = {
-            someFn: function() { }
+            someFn: function(...args) { }
         };
-        spyOn(someObject, "someFn");
-        (<Spy>someObject.someFn)(123);
-        expect((<Spy>someObject.someFn).calls.forCall(0).getArgs().args).toEqual([123]);
+        let spy = spyOn(someObject, "someFn");
+        someObject.someFn(123);
+        expect(spy.calls.forCall(0).getArgs().args).toEqual([123]);
     });
 });
 
@@ -433,21 +433,21 @@ describe(`Calling calls.forCall(i).getArg(nth)`, function() {
         let someObject = {
             someFn: function(a, b) { }
         };
-        spyOn(someObject, "someFn");
+        let spy = spyOn(someObject, "someFn");
         someObject.someFn(123, 456);
-        expect((<Spy>someObject.someFn).calls.forCall(0).getArg(0)).toEqual(123);
-        expect((<Spy>someObject.someFn).calls.forCall(0).getArg(1)).toEqual(456);
+        expect(spy.calls.forCall(0).getArg(0)).toEqual(123);
+        expect(spy.calls.forCall(0).getArg(1)).toEqual(456);
     });
 });
 
 describe(`Calling calls.forCall(i).getArgsLength()`, function() {
     it(`works like arguments.length for a specific call to the spy`, function() {
         let someObject = {
-            someFn: function() { }
+            someFn: function(...args) { }
         };
-        spyOn(someObject, "someFn");
-        (<Spy>someObject.someFn)(123, 456);
-        expect((<Spy>someObject.someFn).calls.forCall(0).getArgsLength()).toEqual(2);
+        let spy = spyOn(someObject, "someFn");
+        someObject.someFn(123, 456);
+        expect(spy.calls.forCall(0).getArgsLength()).toEqual(2);
     });
 });
 
@@ -456,10 +456,10 @@ describe(`Calling calls.forCall(i).getProperty(nth, propertyName)`, function() {
         let someObject = {
             someFn: function(name) { }
         };
-        spyOn(someObject, "someFn");
+        let spy = spyOn(someObject, "someFn");
         someObject.someFn({ fName: "Abraham", lName: "Lincoln" });
-        expect((<Spy>someObject.someFn).calls.forCall(0).getArgProperty(0, "fName")).toEqual("Abraham");
-        expect((<Spy>someObject.someFn).calls.forCall(0).getArgProperty(0, "lName")).toEqual("Lincoln");
+        expect(spy.calls.forCall(0).getArgProperty(0, "fName")).toEqual("Abraham");
+        expect(spy.calls.forCall(0).getArgProperty(0, "lName")).toEqual("Lincoln");
     });
 });
 
@@ -468,23 +468,23 @@ describe(`Calling calls.forCall(i).hasArgProperty(nth, propertyName)`, function(
         let someObject = {
             someFn: function(name) { }
         };
-        spyOn(someObject, "someFn");
+        let spy = spyOn(someObject, "someFn");
         someObject.someFn({ fName: "Abraham", lName: "Lincoln" });
-        expect((<Spy>someObject.someFn).calls.forCall(0).hasArgProperty(0, "fName")).toBeTrue();
-        expect((<Spy>someObject.someFn).calls.forCall(0).hasArgProperty(0, "lName")).toBeTrue();
-        expect((<Spy>someObject.someFn).calls.forCall(0).hasArgProperty(0, "address")).not.toBeTrue();
+        expect(spy.calls.forCall(0).hasArgProperty(0, "fName")).toBeTrue();
+        expect(spy.calls.forCall(0).hasArgProperty(0, "lName")).toBeTrue();
+        expect(spy.calls.forCall(0).hasArgProperty(0, "address")).not.toBeTrue();
     });
 });
 
 describe(`Calling calls.forCall(i).hasArg(n)`, function() {
     it(`works like !!arguments[nth] for a specific call to the spy`, function() {
         let someObject = {
-            someFn: function() { }
+            someFn: function(...args) { }
         };
-        spyOn(someObject, "someFn");
-        (<Spy>someObject.someFn)("123", 123);
-        expect((<Spy>someObject.someFn).calls.forCall(0).hasArg(0)).toBeTrue();
-        expect((<Spy>someObject.someFn).calls.forCall(0).hasArg(1)).toBeTrue();
+        let spy = spyOn(someObject, "someFn");
+        someObject.someFn("123", 123);
+        expect(spy.calls.forCall(0).hasArg(0)).toBeTrue();
+        expect(spy.calls.forCall(0).hasArg(1)).toBeTrue();
     });
 });
 
@@ -493,9 +493,9 @@ describe(`Calling calls.forCall(i).getError()`, function() {
         let someObject = {
             someFn: function() { }
         };
-        spyOn(someObject, "someFn").and.throw();
+        let spy = spyOn(someObject, "someFn").and.throw();
         someObject.someFn();
-        expect((<Spy>someObject.someFn).calls.forCall(0).getError()).toBeTruthy();
+        expect(spy.calls.forCall(0).getError()).toBeTruthy();
     });
 });
 
@@ -504,9 +504,9 @@ describe(`Calling calls.forCall(i).getReturned()`, function() {
         let someObject = {
             someFn: function(n) { return n + 1; }
         };
-        spyOn(someObject, "someFn").and.callActual();
+        let spy = spyOn(someObject, "someFn").and.callActual();
         someObject.someFn(123);
-        expect((<Spy>someObject.someFn).calls.forCall(0).getReturned()).toEqual(124);
+        expect(spy.calls.forCall(0).getReturned()).toEqual(124);
     });
 });
 
