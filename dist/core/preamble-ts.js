@@ -335,11 +335,15 @@ exports.environment = {
 "use strict";
 exports.deepRecursiveCompare = function (a, b) {
     if (typeof (a) === "object" && typeof (b) === "object") {
+        if (a === b) {
+            // return true if a and b are the same object
+            return true;
+        }
         return compareObjects(a, b) && compareObjects(b, a);
     }
-    if (typeof (a) === "object" || typeof (b) === "object") {
-        return false;
-    }
+    // if (typeof (a) === "object" || typeof (b) === "object") {
+    //     return false;
+    // }
     return a === b;
 };
 var compareObjects = function (a, b) {
@@ -551,6 +555,7 @@ exports.matchersCount = function () { return expectationAPICount; };
 },{"../queue/QueueRunner":20,"../stacktrace/StackTrace":24,"./spy/spy":14}],13:[function(require,module,exports){
 /**
  * Mock API
+ * WARNING: mock is an experimental api and may not be included in the official release.
  */
 "use strict";
 var spy_1 = require("./spy/spy");
@@ -559,7 +564,6 @@ var StackTrace_1 = require("../stacktrace/StackTrace");
 var mockAPI = { not: {} };
 var mockAPICount = 0;
 var negatedMockAPI = {};
-;
 var registerMatcher = function (matcher) {
     if (matcher.negator) {
         mockAPI.not["not." + matcher.apiName] = function () {
@@ -602,6 +606,56 @@ registerMatcher({
     minArgs: 1,
     maxArgs: -1
 });
+registerMatcher({
+    apiName: "toBeCalledWithContext",
+    api: function (matcherValue) { return matcherValue; },
+    evaluator: function (expectedValue, matcherValue) {
+        return expectedValue.calls.wasCalledWithContext(matcherValue);
+    },
+    negator: true,
+    minArgs: 1,
+    maxArgs: 1
+});
+registerMatcher({
+    apiName: "toReturnValue",
+    api: function (matcherValue) { return matcherValue; },
+    evaluator: function (expectedValue, matcherValue) {
+        return expectedValue.calls.returned(matcherValue);
+    },
+    negator: true,
+    minArgs: 1,
+    maxArgs: 1
+});
+registerMatcher({
+    apiName: "toThrow",
+    api: function () { },
+    evaluator: function (expectedValue) {
+        return expectedValue.calls.threw();
+    },
+    negator: true,
+    minArgs: 0,
+    maxArgs: 0
+});
+registerMatcher({
+    apiName: "toThrowWithMessage",
+    api: function (matcherValue) { return matcherValue; },
+    evaluator: function (expectedValue, matcherValue) {
+        return expectedValue.calls.threwWithMessage(matcherValue);
+    },
+    negator: true,
+    minArgs: 1,
+    maxArgs: 1
+});
+registerMatcher({
+    apiName: "toThrowWithName",
+    api: function (matcherValue) { return matcherValue; },
+    evaluator: function (expectedValue, matcherValue) {
+        return expectedValue.calls.threwWithName(matcherValue);
+    },
+    negator: true,
+    minArgs: 1,
+    maxArgs: 1
+});
 exports.mock = function () {
     var args = [];
     for (var _i = 0; _i < arguments.length; _i++) {
@@ -609,64 +663,154 @@ exports.mock = function () {
     }
     var st = StackTrace_1.stackTrace.stackTrace;
     var aSpy = spy_1.spyOn.apply(null, args);
-    var _mock = function () {
+    var _mockProxyStatic = function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i - 0] = arguments[_i];
         }
-        // when called _mock delegates its calls to the spy
-        aSpy.apply(null, args);
+        // when called _mockProxyStatic delegates its calls to the spy
+        aSpy.apply(this, args);
     };
     // mock api
-    var _mockProxy = _mock;
+    var _mock = _mockProxyStatic;
     var apisToCall = [];
-    _mockProxy.and = {};
-    _mockProxy.and.expect = { it: { not: {} } };
-    _mockProxy.and.expect.it.toBeCalled = function () {
+    _mock.and = {};
+    _mock.and.expect = { it: { not: {} } };
+    _mock.and.expect.it.toBeCalled = function () {
         apisToCall.push({
             note: { it: QueueRunner_1.currentIt, apiName: "toBeCalled", expectedValue: aSpy, matcherValue: null, result: null, exception: null, stackTrace: st }
         });
-        return _mockProxy;
+        return _mock;
     };
-    _mockProxy.and.expect.it.not.toBeCalled = function () {
+    _mock.and.expect.it.not.toBeCalled = function () {
         apisToCall.push({
             note: { it: QueueRunner_1.currentIt, apiName: "not.toBeCalled", expectedValue: aSpy, matcherValue: null, result: null, exception: null, stackTrace: st }
         });
-        return _mockProxy;
+        return _mock;
     };
-    _mockProxy.and.expect.it.toBeCalledWith = function () {
+    _mock.and.expect.it.toBeCalledWith = function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i - 0] = arguments[_i];
         }
         apisToCall.push({
-            args: args,
             note: { it: QueueRunner_1.currentIt, apiName: "toBeCalledWith", expectedValue: aSpy, matcherValue: args, result: null, exception: null, stackTrace: st }
         });
-        return _mockProxy;
+        return _mock;
     };
-    _mockProxy.and.expect.it.not.toBeCalledWith = function () {
+    _mock.and.expect.it.not.toBeCalledWith = function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i - 0] = arguments[_i];
         }
         apisToCall.push({
-            args: args,
             note: { it: QueueRunner_1.currentIt, apiName: "not.toBeCalledWith", expectedValue: aSpy, matcherValue: args, result: null, exception: null, stackTrace: st }
         });
-        return _mockProxy;
+        return _mock;
     };
-    _mockProxy.and.expect.it.toBeCalledWithContext;
-    _mockProxy.and.expect.it.toReturn;
-    _mockProxy.and.expect.it.toThrow;
-    _mockProxy.and.expect.it.toThrowWithName;
-    _mockProxy.and.expect.it.toThrowWithMessage;
+    _mock.and.expect.it.toBeCalledWithContext = function (context) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "toBeCalledWithContext", expectedValue: aSpy, matcherValue: context, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.not.toBeCalledWithContext = function (context) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toBeCalledWithContext", expectedValue: aSpy, matcherValue: context, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.toReturnValue = function (value) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "toReturnValue", expectedValue: aSpy, matcherValue: value, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.not.toReturnValue = function (value) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toReturnValue", expectedValue: aSpy, matcherValue: value, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.toThrow = function () {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "toThrow", expectedValue: aSpy, matcherValue: null, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.not.toThrow = function () {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toThrow", expectedValue: aSpy, matcherValue: null, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.toThrowWithName = function (name) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "toThrowWithName", expectedValue: aSpy, matcherValue: name, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.not.toThrowWithName = function (name) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toThrowWithName", expectedValue: aSpy, matcherValue: name, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.toThrowWithMessage = function (message) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "toThrowWithMessage", expectedValue: aSpy, matcherValue: message, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.not.toThrowWithMessage = function (message) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toThrowWithMessage", expectedValue: aSpy, matcherValue: message, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    // methods that delegate to the spy property
+    _mock.and.reset = function () {
+        aSpy.and.reset();
+        return _mock;
+    };
+    _mock.and.callWithContext = function (context) {
+        aSpy.and.callWithContext(context);
+        return _mock;
+    };
+    _mock.and.throw = function () {
+        aSpy.and.throw();
+        return _mock;
+    };
+    _mock.and.throwWithMessage = function (message) {
+        aSpy.and.throwWithMessage(message);
+        return _mock;
+    };
+    _mock.and.throwWithName = function (name) {
+        aSpy.and.throwWithName(name);
+        return _mock;
+    };
+    _mock.and.return = function (ret) {
+        aSpy.and.return(ret);
+        return _mock;
+    };
+    _mock.and.callFake = function (fn) {
+        aSpy.and.callFake(fn);
+        return _mock;
+    };
+    _mock.and.callActual = function () {
+        aSpy.and.callActual();
+        return _mock;
+    };
+    _mock.and.callStub = function () {
+        aSpy.and.callStub();
+        return _mock;
+    };
     // mock validtation
-    _mockProxy.validate = function () {
+    _mock.validate = function () {
         apisToCall.forEach(function (apiToCall) {
             var negated = /not\./.test(apiToCall.note.apiName);
             var reason;
-            if (apiToCall.args) {
+            if (apiToCall.note.matcherValue) {
                 apiToCall.note.result = negated ?
                     mockAPI.not[apiToCall.note.apiName](apiToCall.note.expectedValue, apiToCall.note.matcherValue) :
                     mockAPI[apiToCall.note.apiName](apiToCall.note.expectedValue, apiToCall.note.matcherValue);
@@ -690,7 +834,7 @@ exports.mock = function () {
             }
         });
     };
-    return _mockProxy;
+    return _mock;
 };
 // test api here
 // let aMock = mock().and.expect.it.toBeCalled();
@@ -1137,7 +1281,7 @@ exports.QueueManager = QueueManager;
 "use strict";
 var QueueManager_1 = require("./QueueManager");
 require("../../polyfills/Object.assign"); // prevent eliding import
-// TODO(JS): Add .fail api to done???
+// TODO(JS): Show .fails (i.e. timeouts) in the done???
 var QueueRunner = (function () {
     function QueueRunner(queue, configTimeoutInterval, queueManager, reportDispatch, Q) {
         this.queue = queue;
@@ -1445,7 +1589,6 @@ exports.queueFilter = queueFilter;
 
 },{"./hierarchy":21}],23:[function(require,module,exports){
 "use strict";
-// TODO(js): The QueueManager should be referenced internally to eliminate having to pass each method info from the queue.
 var ReportDispatch = (function () {
     function ReportDispatch() {
     }
