@@ -3,7 +3,7 @@ let preamble = window.preamble;
 
 describe(`"describe" is used to describe a suite which can contain one or more specs`, function() {
     it(`and "it" is used to describe a spec and is used to group one or more expectations"`, function() {
-        expect(true).not.toBeTrue();
+        expect(true).toBeTrue();
         expect(false).not.toBeTrue();
         expect("abc").toEqual("abc");
         expect(123).not.toEqual("abc");
@@ -683,17 +683,17 @@ describe("Custom matchers", function() {
 });
 describe(`Calling and.expect.it.toBeCalled()`, function() {
     it(`sets the expectation that the mock must be called`, function() {
-        let mock = spyOn().and.expect.it.toBeCalled();
-        mock();
-        mock.validate();
+        let m = mock().and.expect.it.toBeCalled();
+        m();
+        m.validate();
     });
 });
 
 describe(`Calling and.expect.it.toBeCalledWith("abc", 123, {zip: "55555"})`, function() {
     it(`sets the expectation that the mock must be called with "abc", 123, {zip: "55555"}`, function() {
-        let mock = spyOn().and.expect.it.toBeCalledWith("abc", 123, { zip: "55555" });
-        mock("abc", 123, { zip: "55555" });
-        mock.validate();
+        let m = mock().and.expect.it.toBeCalledWith("abc", 123, { zip: "55555" });
+        m("abc", 123, { zip: "55555" });
+        m.validate();
     });
 });
 
@@ -706,12 +706,12 @@ describe(`Calling and.expect.it.toBeCalledWithContext(object)`, function() {
             someOtherObject = {
                 sayHi: function() { return "Hello World!"; }
             };
-        spyOn(someObject, "someFn").
+        let m = mock(someObject, "someFn").
             and.callActual().
             and.expect.it.toBeCalledWithContext(someOtherObject).
-            and.expect.it.toReturn("Hello World!");
+            and.expect.it.toReturnValue("Hello World!");
         someObject.someFn.call(someOtherObject);
-        (<Spy>someObject.someFn).validate();
+        m.validate();
     });
 });
 
@@ -720,10 +720,10 @@ describe(`Calling and.expect.it.toReturn(value)`, function() {
         let someObject = {
             someFn: function() { return { fName: "Tom", lName: "Sawyer" }; }
         };
-        spyOn(someObject, "someFn").and.callActual().
-            and.expect.it.toReturn({ fName: "Tom", lName: "Sawyer" });
+        let m = mock(someObject, "someFn").and.callActual().
+            and.expect.it.toReturnValue({ fName: "Tom", lName: "Sawyer" });
         someObject.someFn();
-        (<Spy>someObject.someFn).validate();
+        m.validate();
     });
 });
 
@@ -732,10 +732,10 @@ describe(`Calling and.expect.it.toThrow()`, function() {
         let someObject = {
             someFn: function() { throw new Error("Whoops!"); }
         };
-        spyOn(someObject, "someFn").and.callActual().
+        let m = mock(someObject, "someFn").and.callActual().
             and.expect.it.toThrow();
         someObject.someFn();
-        (<Spy>someObject.someFn).validate();
+        m.validate();
     });
 });
 
@@ -744,10 +744,10 @@ describe(`Calling and.expect.it.toThrowWithName(name)`, function() {
         let someObject = {
             someFn: function() { }
         };
-        spyOn(someObject, "someFn").and.throwWithName("Error").
+        let m = mock(someObject, "someFn").and.throwWithName("Error").
             and.expect.it.toThrowWithName("Error");
         someObject.someFn();
-        (<Spy>someObject.someFn).validate();
+        m.validate();
     });
 });
 
@@ -756,8 +756,9 @@ describe(`Calling and.expect.it.toThrowWithMessage("Whoops!")`, function() {
         let someObject = {
             someFn: function() { }
         };
-        spyOn(someObject, "someFn").and.throwWithMessage("Whoops!").
-            and.expect.it.toThrowWithMessage("Whoops!"); someObject.someFn();
-        (<Spy>someObject.someFn).validate();
+        let m = mock(someObject, "someFn").and.throwWithMessage("Whoops!").
+            and.expect.it.toThrowWithMessage("Whoops!");
+        someObject.someFn();
+        m.validate();
     });
 });
