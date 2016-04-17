@@ -341,9 +341,6 @@ exports.deepRecursiveCompare = function (a, b) {
         }
         return compareObjects(a, b) && compareObjects(b, a);
     }
-    // if (typeof (a) === "object" || typeof (b) === "object") {
-    //     return false;
-    // }
     return a === b;
 };
 var compareObjects = function (a, b) {
@@ -1086,7 +1083,7 @@ exports.spyOn = function () {
  * @param {[object]} context An object to use as the context when calling
  * the spied property methods.
  */
-exports.spyOn.x = function (argObject, argPropertyNames) {
+exports.spyOnN = function (argObject, argPropertyNames) {
     var i, len;
     if (!argObject || typeof (argObject) !== "object") {
         throw new Error("expected an object for 1st parameter - found " +
@@ -1722,6 +1719,7 @@ var configuration_1 = require("./core/configuration/configuration");
 var expect_1 = require("./core/expectations/expect");
 var expect_2 = require("./core/expectations/expect");
 var spy_1 = require("./core/expectations/spy/spy");
+var spy_2 = require("./core/expectations/spy/spy");
 var mock_1 = require("./core/expectations/mock");
 var deeprecursiveequal_1 = require("./core/expectations/comparators/deeprecursiveequal");
 var expect_3 = require("./core/expectations/expect");
@@ -1745,6 +1743,7 @@ if (environment_1.environment.windows) {
     window["afterEach"] = afterEach_1.afterEach;
     window["expect"] = expect_1.expect;
     window["spyOn"] = spy_1.spyOn;
+    window["spyOnN"] = spy_2.spyOnN;
     window["mock"] = mock_1.mock;
     if (window.hasOwnProperty("preamble")) {
         // add reporter plugin

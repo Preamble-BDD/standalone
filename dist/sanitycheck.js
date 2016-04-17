@@ -270,7 +270,7 @@ describe("Calling spyOn.x(object, methodNames)", function () {
             someFn: function () { },
             someOtherFn: function () { }
         };
-        spyOn.x(someObject, ["someFn", "someOtherFn"]);
+        spyOnN(someObject, ["someFn", "someOtherFn"]);
         someObject.someFn();
         expect(someObject.someFn).toHaveBeenCalled();
         someObject.someOtherFn();
