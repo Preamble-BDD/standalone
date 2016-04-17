@@ -623,7 +623,7 @@ describe(`Calling and.callFake(fn)`, function() {
 // Q is exposed on the preamble object
 describe(`Q is exposed in the global preamble object for use in suites`, function() {
     beforeEach(function(done) {
-        window.preamble.Q.delay(150).then(() => {
+        preamble.Q.delay(150).then(() => {
             this.abc = "abc";
             done();
         });
@@ -635,7 +635,7 @@ describe(`Q is exposed in the global preamble object for use in suites`, functio
 });
 
 // custom matchers
-window.preamble.registerMatcher({
+preamble.registerMatcher({
     apiName: "toBeAString",
     api: (matcherValue: any): void => { },
     evaluator: (expectedValue): boolean => typeof expectedValue === "string",
@@ -643,7 +643,7 @@ window.preamble.registerMatcher({
     minArgs: 0,
     maxArgs: 0
 });
-window.preamble.registerMatcher({
+preamble.registerMatcher({
     apiName: "toBeANumber",
     api: (matcherValue: any): void => { },
     evaluator: (expectedValue): boolean => typeof expectedValue === "number",
@@ -651,7 +651,7 @@ window.preamble.registerMatcher({
     minArgs: 0,
     maxArgs: 0
 });
-window.preamble.registerMatcher({
+preamble.registerMatcher({
     apiName: "toBeInstanceOf",
     api: (matcherValue: any): any => matcherValue,
     evaluator: (expectedValue, matcherValue): boolean => expectedValue instanceof matcherValue,
