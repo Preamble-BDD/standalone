@@ -105,9 +105,9 @@ declare interface Spy extends StaticSpy {
 declare interface SpyOnStatic {
     (...args): Spy;
 }
-declare interface SpyOn extends SpyOnStatic {
-    x: (argObject: {}, argPropertyNames: string[]) => void;
-}
+
+declare function spyOnN(argObject: {}, argPropertyNames: string[]): void;
+
 // args API
 declare class Args {
     args: any[];
