@@ -114,8 +114,23 @@ describe("Sharing values between setups, specs and teardowns using \"this\"", fu
         });
     });
     it("this.otherValue should not exist and this.value should equal 10", function () {
-        expect(this.otherValue).toEqual(undefined);
+        expect(this.otherValue).toBeUndefined();
         expect(this.value).toEqual(10);
+    });
+});
+describe("Prevent a suite from running by excluding it with xdescribe", function () {
+    xdescribe("this suite will be excluded and will not be run", function () {
+        it("this spec will not be run", function () {
+            expect(1).toBe(1);
+        });
+    });
+});
+describe("Prevent a spec from running by excluding it with xit", function () {
+    xit("this spec will not be run", function () {
+        expect(1).toBe(0);
+    });
+    it("but this one will", function () {
+        expect(1).not.toBe(0);
     });
 });
 describe("Calling expect", function () {
@@ -145,6 +160,8 @@ describe("Calling toBeTruthy", function () {
     it("sets the expectation that the actual value is truthy", function () {
         expect(1).toBeTruthy();
         expect(0).not.toBeTruthy();
+        expect("abc").toBeTruthy();
+        expect("").not.toBeTruthy();
     });
 });
 describe("Calling toHaveBeenCalled", function () {
@@ -252,7 +269,7 @@ describe("Calling spyOn.x(object, methodNames)", function () {
             someFn: function () { },
             someOtherFn: function () { }
         };
-        spyOn.x(someObject, ["someFn", "someOtherFn"]);
+        spyOnN(someObject, ["someFn", "someOtherFn"]);
         someObject.someFn();
         expect(someObject.someFn).toHaveBeenCalled();
         someObject.someOtherFn();
@@ -296,9 +313,9 @@ describe("Calling calls.wasCalledWithContext(object)", function () {
         var someObj = {
             someFn: function () { }
         };
-        spyOn(someObj, "someFn");
+        var spy = spyOn(someObj, "someFn");
         someObj.someFn();
-        expect(someObj.someFn.calls.wasCalledWithContext(someObj)).toBeTrue();
+        expect(spy.calls.wasCalledWithContext(someObj)).toBeTrue();
     });
 });
 describe("Calling calls.returned(value)", function () {
@@ -306,9 +323,9 @@ describe("Calling calls.returned(value)", function () {
         var someObj = {
             someFn: function (num) { return num; }
         };
-        spyOn(someObj, "someFn").and.callActual();
+        var spy = spyOn(someObj, "someFn").and.callActual();
         someObj.someFn(123);
-        expect(someObj.someFn.calls.returned(123)).toBeTrue();
+        expect(spy.calls.returned(123)).toBeTrue();
     });
 });
 describe("Calling calls.threw()", function () {
@@ -346,19 +363,24 @@ describe("Calling calls.forCall(i).getContext()", function () {
         var someObject = {
             someFn: function () { }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn();
-        expect(someObject.someFn.calls.forCall(0).getContext()).toEqual(someObject);
+        expect(spy.calls.forCall(0).getContext()).toEqual(someObject);
     });
 });
 describe("Calling calls.forCall(i).getArgs()", function () {
     it("Returns an Args object for a specific call to the spy", function () {
         var someObject = {
-            someFn: function () { }
+            someFn: function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i - 0] = arguments[_i];
+                }
+            }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn(123);
-        expect(someObject.someFn.calls.forCall(0).getArgs().args).toEqual([123]);
+        expect(spy.calls.forCall(0).getArgs().args).toEqual([123]);
     });
 });
 describe("Calling calls.forCall(i).getArg(nth)", function () {
@@ -366,20 +388,25 @@ describe("Calling calls.forCall(i).getArg(nth)", function () {
         var someObject = {
             someFn: function (a, b) { }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn(123, 456);
-        expect(someObject.someFn.calls.forCall(0).getArg(0)).toEqual(123);
-        expect(someObject.someFn.calls.forCall(0).getArg(1)).toEqual(456);
+        expect(spy.calls.forCall(0).getArg(0)).toEqual(123);
+        expect(spy.calls.forCall(0).getArg(1)).toEqual(456);
     });
 });
 describe("Calling calls.forCall(i).getArgsLength()", function () {
     it("works like arguments.length for a specific call to the spy", function () {
         var someObject = {
-            someFn: function () { }
+            someFn: function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i - 0] = arguments[_i];
+                }
+            }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn(123, 456);
-        expect(someObject.someFn.calls.forCall(0).getArgsLength()).toEqual(2);
+        expect(spy.calls.forCall(0).getArgsLength()).toEqual(2);
     });
 });
 describe("Calling calls.forCall(i).getProperty(nth, propertyName)", function () {
@@ -387,10 +414,10 @@ describe("Calling calls.forCall(i).getProperty(nth, propertyName)", function () 
         var someObject = {
             someFn: function (name) { }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn({ fName: "Abraham", lName: "Lincoln" });
-        expect(someObject.someFn.calls.forCall(0).getArgProperty(0, "fName")).toEqual("Abraham");
-        expect(someObject.someFn.calls.forCall(0).getArgProperty(0, "lName")).toEqual("Lincoln");
+        expect(spy.calls.forCall(0).getArgProperty(0, "fName")).toEqual("Abraham");
+        expect(spy.calls.forCall(0).getArgProperty(0, "lName")).toEqual("Lincoln");
     });
 });
 describe("Calling calls.forCall(i).hasArgProperty(nth, propertyName)", function () {
@@ -398,22 +425,27 @@ describe("Calling calls.forCall(i).hasArgProperty(nth, propertyName)", function 
         var someObject = {
             someFn: function (name) { }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn({ fName: "Abraham", lName: "Lincoln" });
-        expect(someObject.someFn.calls.forCall(0).hasArgProperty(0, "fName")).toBeTrue();
-        expect(someObject.someFn.calls.forCall(0).hasArgProperty(0, "lName")).toBeTrue();
-        expect(someObject.someFn.calls.forCall(0).hasArgProperty(0, "address")).not.toBeTrue();
+        expect(spy.calls.forCall(0).hasArgProperty(0, "fName")).toBeTrue();
+        expect(spy.calls.forCall(0).hasArgProperty(0, "lName")).toBeTrue();
+        expect(spy.calls.forCall(0).hasArgProperty(0, "address")).not.toBeTrue();
     });
 });
 describe("Calling calls.forCall(i).hasArg(n)", function () {
     it("works like !!arguments[nth] for a specific call to the spy", function () {
         var someObject = {
-            someFn: function () { }
+            someFn: function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i - 0] = arguments[_i];
+                }
+            }
         };
-        spyOn(someObject, "someFn");
+        var spy = spyOn(someObject, "someFn");
         someObject.someFn("123", 123);
-        expect(someObject.someFn.calls.forCall(0).hasArg(0)).toBeTrue();
-        expect(someObject.someFn.calls.forCall(0).hasArg(1)).toBeTrue();
+        expect(spy.calls.forCall(0).hasArg(0)).toBeTrue();
+        expect(spy.calls.forCall(0).hasArg(1)).toBeTrue();
     });
 });
 describe("Calling calls.forCall(i).getError()", function () {
@@ -421,9 +453,9 @@ describe("Calling calls.forCall(i).getError()", function () {
         var someObject = {
             someFn: function () { }
         };
-        spyOn(someObject, "someFn").and.throw();
+        var spy = spyOn(someObject, "someFn").and.throw();
         someObject.someFn();
-        expect(someObject.someFn.calls.forCall(0).getError()).toBeTruthy();
+        expect(spy.calls.forCall(0).getError()).toBeTruthy();
     });
 });
 describe("Calling calls.forCall(i).getReturned()", function () {
@@ -431,9 +463,9 @@ describe("Calling calls.forCall(i).getReturned()", function () {
         var someObject = {
             someFn: function (n) { return n + 1; }
         };
-        spyOn(someObject, "someFn").and.callActual();
+        var spy = spyOn(someObject, "someFn").and.callActual();
         someObject.someFn(123);
-        expect(someObject.someFn.calls.forCall(0).getReturned()).toEqual(124);
+        expect(spy.calls.forCall(0).getReturned()).toEqual(124);
     });
 });
 describe("Calling calls.forCall(i).getArgs().getLength()", function () {
@@ -532,6 +564,19 @@ describe("Calling and.callFake(fn)", function () {
         expect(someObject.someFn).toHaveReturnedValue(true);
     });
 });
+describe("Q is exposed in the global preamble object for use in suites", function () {
+    beforeEach(function (done) {
+        var _this = this;
+        window.preamble.Q.delay(150).then(function () {
+            _this.abc = "abc";
+            done();
+        });
+    });
+    it("this.x should be \"abc & shouldn't be \"cba\"", function () {
+        expect(this.abc).toBe("abc");
+        expect(this.abc).not.toBe("cba");
+    });
+});
 window.preamble.registerMatcher({
     apiName: "toBeAString",
     api: function (matcherValue) { },
@@ -556,7 +601,7 @@ window.preamble.registerMatcher({
     minArgs: 1,
     maxArgs: 1
 });
-describe("Custome matchers", function () {
+describe("Custom matchers", function () {
     it("toBeAString can be loaded dynamically and used just like a built in matcher", function () {
         expect("I am a string").toBeAString();
         expect(999).not.toBeAString();
@@ -583,16 +628,16 @@ describe("Custome matchers", function () {
 });
 describe("Calling and.expect.it.toBeCalled()", function () {
     it("sets the expectation that the mock must be called", function () {
-        var mock = spyOn().and.expect.it.toBeCalled();
-        mock();
-        mock.validate();
+        var m = mock().and.expect.it.toBeCalled();
+        m();
+        m.validate();
     });
 });
 describe("Calling and.expect.it.toBeCalledWith(\"abc\", 123, {zip: \"55555\"})", function () {
     it("sets the expectation that the mock must be called with \"abc\", 123, {zip: \"55555\"}", function () {
-        var mock = spyOn().and.expect.it.toBeCalledWith("abc", 123, { zip: "55555" });
-        mock("abc", 123, { zip: "55555" });
-        mock.validate();
+        var m = mock().and.expect.it.toBeCalledWith("abc", 123, { zip: "55555" });
+        m("abc", 123, { zip: "55555" });
+        m.validate();
     });
 });
 describe("Calling and.expect.it.toBeCalledWithContext(object)", function () {
@@ -603,12 +648,12 @@ describe("Calling and.expect.it.toBeCalledWithContext(object)", function () {
         }, someOtherObject = {
             sayHi: function () { return "Hello World!"; }
         };
-        spyOn(someObject, "someFn").
+        var m = mock(someObject, "someFn").
             and.callActual().
             and.expect.it.toBeCalledWithContext(someOtherObject).
-            and.expect.it.toReturn("Hello World!");
+            and.expect.it.toReturnValue("Hello World!");
         someObject.someFn.call(someOtherObject);
-        someObject.someFn.validate();
+        m.validate();
     });
 });
 describe("Calling and.expect.it.toReturn(value)", function () {
@@ -616,10 +661,10 @@ describe("Calling and.expect.it.toReturn(value)", function () {
         var someObject = {
             someFn: function () { return { fName: "Tom", lName: "Sawyer" }; }
         };
-        spyOn(someObject, "someFn").and.callActual().
-            and.expect.it.toReturn({ fName: "Tom", lName: "Sawyer" });
+        var m = mock(someObject, "someFn").and.callActual().
+            and.expect.it.toReturnValue({ fName: "Tom", lName: "Sawyer" });
         someObject.someFn();
-        someObject.someFn.validate();
+        m.validate();
     });
 });
 describe("Calling and.expect.it.toThrow()", function () {
@@ -627,10 +672,10 @@ describe("Calling and.expect.it.toThrow()", function () {
         var someObject = {
             someFn: function () { throw new Error("Whoops!"); }
         };
-        spyOn(someObject, "someFn").and.callActual().
+        var m = mock(someObject, "someFn").and.callActual().
             and.expect.it.toThrow();
         someObject.someFn();
-        someObject.someFn.validate();
+        m.validate();
     });
 });
 describe("Calling and.expect.it.toThrowWithName(name)", function () {
@@ -638,10 +683,10 @@ describe("Calling and.expect.it.toThrowWithName(name)", function () {
         var someObject = {
             someFn: function () { }
         };
-        spyOn(someObject, "someFn").and.throwWithName("Error").
+        var m = mock(someObject, "someFn").and.throwWithName("Error").
             and.expect.it.toThrowWithName("Error");
         someObject.someFn();
-        someObject.someFn.validate();
+        m.validate();
     });
 });
 describe("Calling and.expect.it.toThrowWithMessage(\"Whoops!\")", function () {
@@ -649,9 +694,10 @@ describe("Calling and.expect.it.toThrowWithMessage(\"Whoops!\")", function () {
         var someObject = {
             someFn: function () { }
         };
-        spyOn(someObject, "someFn").and.throwWithMessage("Whoops!").
+        var m = mock(someObject, "someFn").and.throwWithMessage("Whoops!").
             and.expect.it.toThrowWithMessage("Whoops!");
         someObject.someFn();
-        someObject.someFn.validate();
+        m.validate();
     });
 });
+//# sourceMappingURL=sanitycheck.js.map

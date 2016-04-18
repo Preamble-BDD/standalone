@@ -1,6 +1,7 @@
 {
   "name": "preamble-ts-standalong",
   "version": "0.0.1",
+  "preambleVersion": "0.1.0",
   "description": "Standalone runner for the browser",
   "main": "index.js",
   "scripts": {

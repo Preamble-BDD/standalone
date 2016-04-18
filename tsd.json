@@ -5,5 +5,8 @@
   "path": "typings",
   "bundle": "typings/tsd.d.ts",
   "installed": {
+    "q/Q.d.ts": {
+      "commit": "dbb2d9f1f1f0e50a3530dcfc02944f492be246dd"
+    }
   }
 }

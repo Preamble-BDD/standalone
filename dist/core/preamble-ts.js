@@ -6,6 +6,7 @@
 "use strict";
 var AfterEach_1 = require("../queue/AfterEach");
 var callstack_1 = require("./callstack");
+var StackTrace_1 = require("../stacktrace/StackTrace");
 function afterEach(callback, timeoutInterval) {
     if (timeoutInterval === void 0) { timeoutInterval = 0; }
     var _afterEach;
@@ -19,13 +20,13 @@ function afterEach(callback, timeoutInterval) {
         throw new TypeError("afterEach called with invalid parameters");
     }
     // an AfterEach object
-    _afterEach = new AfterEach_1.AfterEach(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), callback, timeoutInterval);
+    _afterEach = new AfterEach_1.AfterEach(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), callback, timeoutInterval, StackTrace_1.stackTrace.stackTrace);
     // add it to its parent describe
     callstack_1.callStack.getTopOfStack().afterEach = _afterEach;
 }
 exports.afterEach = afterEach;
 
-},{"../queue/AfterEach":14,"./callstack":3}],2:[function(require,module,exports){
+},{"../queue/AfterEach":15,"../stacktrace/StackTrace":24,"./callstack":3}],2:[function(require,module,exports){
 /**
  * Callable API
  * beforeEach(function([done]))
@@ -33,6 +34,7 @@ exports.afterEach = afterEach;
 "use strict";
 var BeforeEach_1 = require("../queue/BeforeEach");
 var callstack_1 = require("./callstack");
+var StackTrace_1 = require("../stacktrace/StackTrace");
 function beforeEach(callback, timeoutInterval) {
     if (timeoutInterval === void 0) { timeoutInterval = 0; }
     var _beforeEach;
@@ -46,19 +48,19 @@ function beforeEach(callback, timeoutInterval) {
         throw new TypeError("beforeEach called with invalid parameters");
     }
     // a BeforeEach object
-    _beforeEach = new BeforeEach_1.BeforeEach(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), callback, timeoutInterval);
+    _beforeEach = new BeforeEach_1.BeforeEach(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), callback, timeoutInterval, StackTrace_1.stackTrace.stackTrace);
     // add it to its parent describe
     callstack_1.callStack.getTopOfStack().beforeEach = _beforeEach;
 }
 exports.beforeEach = beforeEach;
 
-},{"../queue/BeforeEach":15,"./callstack":3}],3:[function(require,module,exports){
+},{"../queue/BeforeEach":16,"../stacktrace/StackTrace":24,"./callstack":3}],3:[function(require,module,exports){
 "use strict";
 var CallStack_1 = require("../callstack/CallStack");
 var UniqueNumber_1 = require("../uniquenumber/UniqueNumber");
 exports.callStack = new CallStack_1.CallStack(new UniqueNumber_1.UniqueNumber());
 
-},{"../callstack/CallStack":8,"../uniquenumber/UniqueNumber":20}],4:[function(require,module,exports){
+},{"../callstack/CallStack":8,"../uniquenumber/UniqueNumber":25}],4:[function(require,module,exports){
 /**
  * Callable API
  * describe("description", callback)
@@ -69,20 +71,26 @@ var Describe_1 = require("../queue/Describe");
 var QueueManager_1 = require("../queue/QueueManager");
 function describe(label, callback) {
     var _describe;
+    var excluded;
     if (arguments.length !== 2 || typeof (arguments[0])
         !== "string" || typeof (arguments[1]) !== "function") {
         throw new TypeError("describe called with invalid parameters");
     }
+    // mark the Describe excluded if any of its parents are excluded
+    // TODO(js):
+    excluded = callstack_1.callStack.stack.some(function (item) {
+        return item.excluded;
+    });
     // a Description object
-    _describe = new Describe_1.Describe(callstack_1.callStack.uniqueId.toString(), label, callback, callstack_1.callStack.length && callstack_1.callStack.getTopOfStack() || null, callstack_1.callStack.length && callstack_1.callStack.getTopOfStack().excluded || false);
-    // push Describe onto the queue only if it is a top level Describe
-    // if (callStack.length === 0) {
-    //     QueueManager.queue.push(_describe);
-    // } else {
-    //     callStack.getTopOfStack().items.push(_describe);
-    // }
+    _describe = new Describe_1.Describe(callstack_1.callStack.uniqueId.toString(), label, callback, callstack_1.callStack.length && callstack_1.callStack.getTopOfStack() || null, excluded);
     // push Describe onto the queue
     QueueManager_1.QueueManager.queue.push(_describe);
+    // increment totDescribes count
+    QueueManager_1.QueueManager.bumpTotDescribesCount();
+    // increment total excluded Describes if excluded
+    if (excluded) {
+        QueueManager_1.QueueManager.bumpTotExcDescribesCount();
+    }
     // push Describe onto the callstack
     callstack_1.callStack.pushDescribe(_describe);
     // call callback to register the beforeEach, afterEach, it and describe calls
@@ -99,7 +107,7 @@ function describe(label, callback) {
 }
 exports.describe = describe;
 
-},{"../queue/Describe":16,"../queue/QueueManager":18,"./callstack":3}],5:[function(require,module,exports){
+},{"../queue/Describe":17,"../queue/QueueManager":19,"./callstack":3}],5:[function(require,module,exports){
 /**
  * Callable api
  * it("description", callback)
@@ -108,9 +116,11 @@ exports.describe = describe;
 var It_1 = require("../queue/It");
 var callstack_1 = require("./callstack");
 var QueueManager_1 = require("../queue/QueueManager");
+var StackTrace_1 = require("../stacktrace/StackTrace");
 function it(label, callback, timeoutInterval) {
     if (timeoutInterval === void 0) { timeoutInterval = 0; }
     var _it;
+    var excluded;
     if (arguments.length !== 2 && arguments.length !== 3) {
         throw new TypeError("it called with invalid parameters");
     }
@@ -120,16 +130,24 @@ function it(label, callback, timeoutInterval) {
     if (arguments.length === 3 && typeof (arguments[2]) !== "number") {
         throw new TypeError("it called with invalid parameters");
     }
+    // mark the It excluded if any of its parents are excluded
+    excluded = callstack_1.callStack.stack.some(function (item) {
+        return item.excluded;
+    });
     // an It object
-    _it = new It_1.It(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), label, callback, callstack_1.callStack.getTopOfStack().excluded, timeoutInterval);
-    // push Describe onto the queue
+    _it = new It_1.It(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), label, callback, excluded, timeoutInterval, StackTrace_1.stackTrace.stackTrace);
+    // push It onto the queue
     QueueManager_1.QueueManager.queue.push(_it);
-    // Increment totIts count
-    QueueManager_1.QueueManager.totIts++;
+    // increment totIts count
+    QueueManager_1.QueueManager.bumpTotItsCount();
+    // increment total excluded Its if excluded
+    if (excluded) {
+        QueueManager_1.QueueManager.bumpTotExcItsCount();
+    }
 }
 exports.it = it;
 
-},{"../queue/It":17,"../queue/QueueManager":18,"./callstack":3}],6:[function(require,module,exports){
+},{"../queue/It":18,"../queue/QueueManager":19,"../stacktrace/StackTrace":24,"./callstack":3}],6:[function(require,module,exports){
 /**
  * Callable API
  * xdescribe("description", callback)
@@ -150,14 +168,12 @@ function xdescribe(label, callback) {
     }
     // a Description object
     _describe = new Describe_1.Describe(callstack_1.callStack.uniqueId.toString(), label, callback, callstack_1.callStack.length && callstack_1.callStack.getTopOfStack() || null, true);
-    // // push Describe onto the queue only if it is a top level Describe
-    // if (cs.length === 0) {
-    //     QueueManager.queue.push(_describe);
-    // } else {
-    //     cs.getTopOfStack().items.push(_describe);
-    // }
     // push Describe onto the queue
     QueueManager_1.QueueManager.queue.push(_describe);
+    // increment totDescribes count
+    QueueManager_1.QueueManager.bumpTotDescribesCount();
+    // increment totExcDescribes count
+    QueueManager_1.QueueManager.bumpTotExcDescribesCount();
     // push Describe object onto the callstack
     callstack_1.callStack.pushDescribe(_describe);
     // call callback to register the beforeEach, afterEach, it and describe calls
@@ -174,7 +190,7 @@ function xdescribe(label, callback) {
 }
 exports.xdescribe = xdescribe;
 
-},{"../queue/Describe":16,"../queue/QueueManager":18,"./callstack":3}],7:[function(require,module,exports){
+},{"../queue/Describe":17,"../queue/QueueManager":19,"./callstack":3}],7:[function(require,module,exports){
 /**
  * Callable api
  * xit("description", callback)
@@ -184,6 +200,7 @@ exports.xdescribe = xdescribe;
 var It_1 = require("../queue/It");
 var callstack_1 = require("./callstack");
 var QueueManager_1 = require("../queue/QueueManager");
+var StackTrace_1 = require("../stacktrace/StackTrace");
 function xit(label, callback, timeoutInterval) {
     if (timeoutInterval === void 0) { timeoutInterval = 0; }
     var _it;
@@ -197,17 +214,17 @@ function xit(label, callback, timeoutInterval) {
         throw new TypeError("it called with invalid parameters");
     }
     // an It object
-    _it = new It_1.It(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), label, callback, true, timeoutInterval);
+    _it = new It_1.It(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), label, callback, true, timeoutInterval, StackTrace_1.stackTrace.stackTrace);
     // push Describe onto the queue
     QueueManager_1.QueueManager.queue.push(_it);
     // Increment totIts count
-    QueueManager_1.QueueManager.totIts++;
+    QueueManager_1.QueueManager.bumpTotItsCount();
     // Increment totExclIts count
-    QueueManager_1.QueueManager.totExclIts++;
+    QueueManager_1.QueueManager.bumpTotExcItsCount();
 }
 exports.xit = xit;
 
-},{"../queue/It":17,"../queue/QueueManager":18,"./callstack":3}],8:[function(require,module,exports){
+},{"../queue/It":18,"../queue/QueueManager":19,"../stacktrace/StackTrace":24,"./callstack":3}],8:[function(require,module,exports){
 /**
  * CallStack
  */
@@ -264,7 +281,7 @@ var CallStack = (function () {
 }());
 exports.CallStack = CallStack;
 
-},{"../queue/Describe":16}],9:[function(require,module,exports){
+},{"../queue/Describe":17}],9:[function(require,module,exports){
 /**
  * Environment Dependent Configuration
  */
@@ -277,9 +294,9 @@ require("../../polyfills/Object.assign"); // prevent eliding import
 function windowsConfiguration() {
     var defaultConfiguration = {
         windowGlobals: true,
-        timeoutInterval: 50,
+        timeoutInterval: 5000,
         name: "Suite",
-        uiTestContainerId: "ui-test-container",
+        uiTestContainerId: "preamble-ui-container",
         hidePassedTests: false,
         shortCircuit: false
     };
@@ -304,7 +321,7 @@ else {
     nodeConfiguration();
 }
 
-},{"../../polyfills/Object.assign":22,"../environment/environment":10}],10:[function(require,module,exports){
+},{"../../polyfills/Object.assign":27,"../environment/environment":10}],10:[function(require,module,exports){
 /**
  * environment
  */
@@ -318,10 +335,11 @@ exports.environment = {
 "use strict";
 exports.deepRecursiveCompare = function (a, b) {
     if (typeof (a) === "object" && typeof (b) === "object") {
+        if (a === b) {
+            // return true if a and b are the same object
+            return true;
+        }
         return compareObjects(a, b) && compareObjects(b, a);
-    }
-    if (typeof (a) === "object" || typeof (b) === "object") {
-        return false;
     }
     return a === b;
 };
@@ -390,10 +408,12 @@ var compareArrays = function (a, b) {
 "use strict";
 var spy_1 = require("./spy/spy");
 var QueueRunner_1 = require("../queue/QueueRunner");
-var matchers = [];
+var StackTrace_1 = require("../stacktrace/StackTrace");
 var expectationAPI = {};
 var expectationAPICount = 0;
 var negatedExpectationAPI = {};
+// add not api to expect api
+expectationAPI["not"] = negatedExpectationAPI;
 var note;
 /**
  * argChecker - checks that the matcher has the
@@ -431,81 +451,394 @@ var argsChecker = function (matcher, argsLength) {
     return true;
 };
 var addNoteToIt = function (note) { return QueueRunner_1.currentIt.expectations.push(note); };
-// add not api to expect api
-expectationAPI["not"] = negatedExpectationAPI;
+var showAs = function (value) {
+    if (Array.isArray(value)) {
+        return "array";
+    }
+    if (typeof (value) === "function") {
+        return "function";
+    }
+    if (typeof (value) === "object") {
+        return "object";
+    }
+    if (typeof (value) === "string") {
+        return "\"" + value + "\"";
+    }
+    if (typeof (value) === "number") {
+        return value;
+    }
+    if (typeof (value) === "boolean") {
+        return value;
+    }
+    if (typeof (value) === "undefined") {
+        return "undefined";
+    }
+};
+var assignReason = function (note) {
+    var reason;
+    if (!note.result) {
+        if (note.matcherValue != null) {
+            reason = "expect(" + showAs(note.expectedValue) + ")." + note.apiName + "(" + showAs(note.matcherValue) + ") failed!";
+        }
+        else {
+            reason = "expect(" + showAs(note.expectedValue) + ")." + note.apiName + "() failed!";
+        }
+        QueueRunner_1.currentIt.reasons.push({ reason: reason, stackTrace: note.stackTrace });
+    }
+};
 // expect(value)
 exports.expect = function (ev) {
     // if a callback was returned then call it and use what it returns for the expected value
     var expectedValue = ev;
-    if (typeof (ev) === "function" && !ev.hasOwnProperty("_spyMaker")) {
+    // capture the stack trace here when expect is called.
+    var st = StackTrace_1.stackTrace.stackTrace;
+    if (typeof (ev) === "function" && !ev.hasOwnProperty("_spyMarker")) {
         var spy = spy_1.spyOn(ev).and.callActual();
         expectedValue = spy();
     }
-    note = { it: QueueRunner_1.currentIt, apiName: null, expectedValue: expectedValue, matcherValue: null, result: null, exception: null };
+    note = { it: QueueRunner_1.currentIt, apiName: null, expectedValue: expectedValue, matcherValue: null, result: null, exception: null, stackTrace: st };
     return expectationAPI;
 };
 exports.registerMatcher = function (matcher) {
-    var proxy = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i - 0] = arguments[_i];
-        }
-        note.apiName = matcher.apiName;
-        if (argsChecker(matcher, args.length)) {
-            // don't call matcher.api if it doesn't return a value (e.g. toBeTrue)
-            note.matcherValue = matcher.minArgs > 0 ? matcher.api.apply(null, args) : note.matcherValue;
-            // if a callback was returned then call it and use what it returns for the matcher value
-            note.matcherValue = note.matcherValue && typeof (note.matcherValue) === "function" && note.matcherValue() || note.matcherValue;
-            if (matcher.minArgs) {
-                note.result = matcher.evaluator(note.expectedValue, note.matcherValue);
+    var proxy = function (not) {
+        return function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i - 0] = arguments[_i];
+            }
+            note.apiName = not ? "not." + matcher.apiName : matcher.apiName;
+            if (argsChecker(matcher, args.length)) {
+                // don't call matcher.api if it doesn't return a value (e.g. toBeTrue)
+                note.matcherValue = matcher.minArgs > 0 ? matcher.api.apply(null, args) : note.matcherValue;
+                // if a callback was returned then call it and use what it returns for the matcher value
+                note.matcherValue = note.matcherValue && typeof (note.matcherValue) === "function" && note.matcherValue() || note.matcherValue;
+                if (not) {
+                    if (matcher.minArgs) {
+                        note.result = !matcher.evaluator(note.expectedValue, note.matcherValue);
+                    }
+                    else {
+                        note.result = !matcher.evaluator(note.expectedValue);
+                    }
+                }
+                else {
+                    if (matcher.minArgs) {
+                        note.result = matcher.evaluator(note.expectedValue, note.matcherValue);
+                    }
+                    else {
+                        note.result = matcher.evaluator(note.expectedValue);
+                    }
+                }
+                addNoteToIt(note);
+                assignReason(note);
+                // set It's and its parent Describe's passed property to false when expectation fails
+                QueueRunner_1.currentIt.passed = !note.result ? note.result : QueueRunner_1.currentIt.passed;
+                QueueRunner_1.currentIt.parent.passed = !note.result ? note.result : QueueRunner_1.currentIt.parent.passed;
+                console.log("note", note);
             }
             else {
-                note.result = matcher.evaluator(note.expectedValue);
+                console.log("note", note);
             }
-            addNoteToIt(note);
-            console.log("note", note);
-        }
-        else {
-            console.log("note", note);
-        }
-    };
-    var proxyNot = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i - 0] = arguments[_i];
-        }
-        note.apiName = "not." + matcher.apiName;
-        if (argsChecker(matcher, args.length)) {
-            // don't call matcher.api if it doesn't return a value (e.g. toBeTrue)
-            note.matcherValue = matcher.minArgs > 0 ? matcher.api.apply(null, args) : note.matcherValue;
-            // if a callback was returned then call it and use what it returns for the matcher value
-            note.matcherValue = note.matcherValue && typeof (note.matcherValue) === "function" && note.matcherValue() || note.matcherValue;
-            if (matcher.minArgs) {
-                note.result = !matcher.evaluator(note.expectedValue, note.matcherValue);
-            }
-            else {
-                note.result = !matcher.evaluator(note.expectedValue);
-            }
-            addNoteToIt(note);
-            console.log("note", note);
-        }
-        else {
-            console.log("note", note);
-        }
+        };
     };
     console.log("Registering matcher", matcher.apiName);
-    expectationAPI[matcher.apiName] = proxy;
+    expectationAPI[matcher.apiName] = proxy(false);
     if (matcher.negator) {
-        negatedExpectationAPI[matcher.apiName] = proxyNot;
+        negatedExpectationAPI[matcher.apiName] = proxy(true);
     }
     expectationAPICount++;
 };
 exports.matchersCount = function () { return expectationAPICount; };
 
-},{"../queue/QueueRunner":19,"./spy/spy":13}],13:[function(require,module,exports){
+},{"../queue/QueueRunner":20,"../stacktrace/StackTrace":24,"./spy/spy":14}],13:[function(require,module,exports){
+/**
+ * Mock API
+ * WARNING: mock is an experimental api and may not be included in the official release.
+ */
+"use strict";
+var spy_1 = require("./spy/spy");
+var QueueRunner_1 = require("../queue/QueueRunner");
+var StackTrace_1 = require("../stacktrace/StackTrace");
+var mockAPI = { not: {} };
+var mockAPICount = 0;
+var negatedMockAPI = {};
+var registerMatcher = function (matcher) {
+    if (matcher.negator) {
+        mockAPI.not["not." + matcher.apiName] = function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i - 0] = arguments[_i];
+            }
+            return !matcher.evaluator.apply(null, args);
+        };
+    }
+    mockAPI[matcher.apiName] = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i - 0] = arguments[_i];
+        }
+        return matcher.evaluator.apply(null, args);
+    };
+};
+registerMatcher({
+    apiName: "toBeCalled",
+    api: function () { },
+    evaluator: function (expectedValue) { return expectedValue.calls.count() > 0; },
+    negator: true,
+    minArgs: 0,
+    maxArgs: 0
+});
+registerMatcher({
+    apiName: "toBeCalledWith",
+    api: function () {
+        var matcherValue = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            matcherValue[_i - 0] = arguments[_i];
+        }
+        return matcherValue;
+    },
+    evaluator: function (expectedValue, matcherValue) {
+        return expectedValue.calls.wasCalledWith.apply(null, matcherValue);
+    },
+    negator: true,
+    minArgs: 1,
+    maxArgs: -1
+});
+registerMatcher({
+    apiName: "toBeCalledWithContext",
+    api: function (matcherValue) { return matcherValue; },
+    evaluator: function (expectedValue, matcherValue) {
+        return expectedValue.calls.wasCalledWithContext(matcherValue);
+    },
+    negator: true,
+    minArgs: 1,
+    maxArgs: 1
+});
+registerMatcher({
+    apiName: "toReturnValue",
+    api: function (matcherValue) { return matcherValue; },
+    evaluator: function (expectedValue, matcherValue) {
+        return expectedValue.calls.returned(matcherValue);
+    },
+    negator: true,
+    minArgs: 1,
+    maxArgs: 1
+});
+registerMatcher({
+    apiName: "toThrow",
+    api: function () { },
+    evaluator: function (expectedValue) {
+        return expectedValue.calls.threw();
+    },
+    negator: true,
+    minArgs: 0,
+    maxArgs: 0
+});
+registerMatcher({
+    apiName: "toThrowWithMessage",
+    api: function (matcherValue) { return matcherValue; },
+    evaluator: function (expectedValue, matcherValue) {
+        return expectedValue.calls.threwWithMessage(matcherValue);
+    },
+    negator: true,
+    minArgs: 1,
+    maxArgs: 1
+});
+registerMatcher({
+    apiName: "toThrowWithName",
+    api: function (matcherValue) { return matcherValue; },
+    evaluator: function (expectedValue, matcherValue) {
+        return expectedValue.calls.threwWithName(matcherValue);
+    },
+    negator: true,
+    minArgs: 1,
+    maxArgs: 1
+});
+exports.mock = function () {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i - 0] = arguments[_i];
+    }
+    var st = StackTrace_1.stackTrace.stackTrace;
+    var aSpy = spy_1.spyOn.apply(null, args);
+    var _mockProxyStatic = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i - 0] = arguments[_i];
+        }
+        // when called _mockProxyStatic delegates its calls to the spy
+        aSpy.apply(this, args);
+    };
+    // mock api
+    var _mock = _mockProxyStatic;
+    var apisToCall = [];
+    _mock.and = {};
+    _mock.and.expect = { it: { not: {} } };
+    _mock.and.expect.it.toBeCalled = function () {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "toBeCalled", expectedValue: aSpy, matcherValue: null, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.not.toBeCalled = function () {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toBeCalled", expectedValue: aSpy, matcherValue: null, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.toBeCalledWith = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i - 0] = arguments[_i];
+        }
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "toBeCalledWith", expectedValue: aSpy, matcherValue: args, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.not.toBeCalledWith = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i - 0] = arguments[_i];
+        }
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toBeCalledWith", expectedValue: aSpy, matcherValue: args, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.toBeCalledWithContext = function (context) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "toBeCalledWithContext", expectedValue: aSpy, matcherValue: context, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.not.toBeCalledWithContext = function (context) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toBeCalledWithContext", expectedValue: aSpy, matcherValue: context, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.toReturnValue = function (value) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "toReturnValue", expectedValue: aSpy, matcherValue: value, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.not.toReturnValue = function (value) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toReturnValue", expectedValue: aSpy, matcherValue: value, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.toThrow = function () {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "toThrow", expectedValue: aSpy, matcherValue: null, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.not.toThrow = function () {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toThrow", expectedValue: aSpy, matcherValue: null, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.toThrowWithName = function (name) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "toThrowWithName", expectedValue: aSpy, matcherValue: name, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.not.toThrowWithName = function (name) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toThrowWithName", expectedValue: aSpy, matcherValue: name, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.toThrowWithMessage = function (message) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "toThrowWithMessage", expectedValue: aSpy, matcherValue: message, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    _mock.and.expect.it.not.toThrowWithMessage = function (message) {
+        apisToCall.push({
+            note: { it: QueueRunner_1.currentIt, apiName: "not.toThrowWithMessage", expectedValue: aSpy, matcherValue: message, result: null, exception: null, stackTrace: st }
+        });
+        return _mock;
+    };
+    // methods that delegate to the spy property
+    _mock.and.reset = function () {
+        aSpy.and.reset();
+        return _mock;
+    };
+    _mock.and.callWithContext = function (context) {
+        aSpy.and.callWithContext(context);
+        return _mock;
+    };
+    _mock.and.throw = function () {
+        aSpy.and.throw();
+        return _mock;
+    };
+    _mock.and.throwWithMessage = function (message) {
+        aSpy.and.throwWithMessage(message);
+        return _mock;
+    };
+    _mock.and.throwWithName = function (name) {
+        aSpy.and.throwWithName(name);
+        return _mock;
+    };
+    _mock.and.return = function (ret) {
+        aSpy.and.return(ret);
+        return _mock;
+    };
+    _mock.and.callFake = function (fn) {
+        aSpy.and.callFake(fn);
+        return _mock;
+    };
+    _mock.and.callActual = function () {
+        aSpy.and.callActual();
+        return _mock;
+    };
+    _mock.and.callStub = function () {
+        aSpy.and.callStub();
+        return _mock;
+    };
+    // mock validtation
+    _mock.validate = function () {
+        apisToCall.forEach(function (apiToCall) {
+            var negated = /not\./.test(apiToCall.note.apiName);
+            var reason;
+            if (apiToCall.note.matcherValue) {
+                apiToCall.note.result = negated ?
+                    mockAPI.not[apiToCall.note.apiName](apiToCall.note.expectedValue, apiToCall.note.matcherValue) :
+                    mockAPI[apiToCall.note.apiName](apiToCall.note.expectedValue, apiToCall.note.matcherValue);
+            }
+            else {
+                apiToCall.note.result = negated ?
+                    mockAPI.not[apiToCall.note.apiName](apiToCall.note.expectedValue) :
+                    mockAPI[apiToCall.note.apiName](apiToCall.note.expectedValue);
+            }
+            QueueRunner_1.currentIt.passed = apiToCall.note.result && QueueRunner_1.currentIt.passed || false;
+            QueueRunner_1.currentIt.parent.passed = apiToCall.note.result && QueueRunner_1.currentIt.passed || false;
+            QueueRunner_1.currentIt.expectations.push(apiToCall.note);
+            if (!apiToCall.note.result) {
+                if (apiToCall.note.matcherValue) {
+                    reason = "mock().and.expect.it." + apiToCall.note.apiName + "(" + apiToCall.note.matcherValue + ") failed!";
+                }
+                else {
+                    reason = "mock().and.expect.it." + apiToCall.note.apiName + "() failed!";
+                }
+                QueueRunner_1.currentIt.reasons.push({ reason: reason, stackTrace: apiToCall.note.stackTrace });
+            }
+        });
+    };
+    return _mock;
+};
+// test api here
+// let aMock = mock().and.expect.it.toBeCalled();
+
+},{"../queue/QueueRunner":20,"../stacktrace/StackTrace":24,"./spy/spy":14}],14:[function(require,module,exports){
 "use strict";
 var deeprecursiveequal_1 = require("../comparators/deeprecursiveequal");
-var QueueRunner_1 = require("../../queue/QueueRunner");
 // args API
 var Args = (function () {
     function Args(args) {
@@ -544,7 +877,6 @@ var ACall = (function () {
     return ACall;
 }());
 exports.ACall = ACall;
-// (argsObject, argProperty)
 exports.spyOn = function () {
     var args = [];
     for (var _i = 0; _i < arguments.length; _i++) {
@@ -603,11 +935,10 @@ exports.spyOn = function () {
         if (!spy._callActual) {
             returned = spy._returns || returned;
         }
-        //  spy.args = new Args(aArgs);
         calls.push(new ACall(spy._callWithContext || this, new Args(aArgs), error, returned));
         return returned;
     };
-    spy._spyMaker = "preamble.spy";
+    spy._spyMarker = "preamble.spy";
     // stub api
     spy._throws = false;
     spy._throwsMessage = "";
@@ -622,7 +953,6 @@ exports.spyOn = function () {
         spy._throwsName = "";
         spy._callWithContext = null;
         spy._hasExpectations = false;
-        spy._expectations = {};
         return spy;
     };
     spy._callWithContext = null;
@@ -739,92 +1069,6 @@ exports.spyOn = function () {
             });
         }
     };
-    // mock api
-    spy._hasExpectations = false;
-    spy._expectations = {};
-    spy.and.expect = {
-        it: {}
-    };
-    spy.and.expect.it.toBeCalled = function () {
-        spy._hasExpectations = true;
-        spy._expectations.toBeCalled = true;
-        return spy;
-    };
-    spy.and.expect.it.toBeCalledWith = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i - 0] = arguments[_i];
-        }
-        spy._hasExpectations = true;
-        spy._expectations.toBeCalledWith = args;
-        return spy;
-    };
-    spy.and.expect.it.toBeCalledWithContext = function (obj) {
-        spy._hasExpectations = true;
-        spy._expectations.toBeCalledWithContext = obj;
-        return spy;
-    };
-    spy.and.expect.it.toReturn = function (value) {
-        spy._hasExpectations = true;
-        spy._expectations.toReturnValue = value;
-        return spy;
-    };
-    spy.and.expect.it.toThrow = function () {
-        spy._hasExpectations = true;
-        spy._expectations.toThrow = true;
-        return spy;
-    };
-    spy.and.expect.it.toThrowWithName = function (name) {
-        spy._hasExpectations = true;
-        spy._expectations.toThrowWithName = name;
-        return spy;
-    };
-    spy.and.expect.it.toThrowWithMessage = function (message) {
-        spy._hasExpectations = true;
-        spy._expectations.toThrowWithMessage = message;
-        return spy;
-    };
-    spy.validate = function () {
-        var noteMockExpectation = function (apiName, evaluator, matcherValue) {
-            var note = {
-                it: QueueRunner_1.currentIt,
-                apiName: apiName,
-                expectedValue: spy,
-                matcherValue: matcherValue || null,
-                result: null,
-                exception: null
-            };
-            try {
-                note.result = evaluator();
-            }
-            catch (error) {
-                note.exception = error;
-            }
-            QueueRunner_1.currentIt.expectations.push(note);
-            console.log("note", note);
-        };
-        if (spy._hasExpectations && spy._expectations.toBeCalled) {
-            noteMockExpectation("mock.toBeCalled", function () { return spy.calls.count() > 0; });
-        }
-        if (spy._hasExpectations && spy._expectations.toBeCalledWith) {
-            noteMockExpectation("mock.toBeCalledWith", function () { return spy.calls.wasCalledWith.apply(null, spy._expectations.toBeCalledWith); }, spy._expectations.toBeCalledWith);
-        }
-        if (spy._hasExpectations && spy._expectations.toBeCalledWithContext) {
-            noteMockExpectation("mock.toBeCalledWithContext", function () { return spy.calls.wasCalledWithContext(spy._expectations.toBeCalledWithContext); }, spy._expectations.toBeCalledWith);
-        }
-        if (spy._hasExpectations && spy._expectations.toReturnValue) {
-            noteMockExpectation("mock.toReturnValue", function () { return spy.calls.returned(spy._expectations.toReturnValue); }, spy._expectations.toReturnValue);
-        }
-        if (spy._hasExpectations && spy._expectations.toThrow) {
-            noteMockExpectation("mock.toThrow", function () { return spy.calls.threw(); });
-        }
-        if (spy._hasExpectations && spy._expectations.toThrowWithName) {
-            noteMockExpectation("mock.toThrowWithName", function () { return spy.calls.threwWithName(spy._expectations.toThrowWithName); }, spy._expectations.toThrowWithName);
-        }
-        if (spy._hasExpectations && spy._expectations.toThrowWithMessage) {
-            noteMockExpectation("mock.toThrowWithMessage", function () { return spy.calls.threwWithMessage(spy._expectations.toThrowWithMessage); }, spy._expectations.toThrowWithMessage);
-        }
-    };
     if (args.length && typeof (args[0]) !== "function" &&
         typeof (args[0]) === "object") {
         args[0][args[1]] = spy;
@@ -839,7 +1083,7 @@ exports.spyOn = function () {
  * @param {[object]} context An object to use as the context when calling
  * the spied property methods.
  */
-exports.spyOn.x = function (argObject, argPropertyNames) {
+exports.spyOnN = function (argObject, argPropertyNames) {
     var i, len;
     if (!argObject || typeof (argObject) !== "object") {
         throw new Error("expected an object for 1st parameter - found " +
@@ -872,33 +1116,35 @@ exports.spyOn.x = function (argObject, argPropertyNames) {
     });
 };
 
-},{"../../queue/QueueRunner":19,"../comparators/deeprecursiveequal":11}],14:[function(require,module,exports){
+},{"../comparators/deeprecursiveequal":11}],15:[function(require,module,exports){
 "use strict";
 var AfterEach = (function () {
-    function AfterEach(parent, id, callback, timeoutInterval) {
+    function AfterEach(parent, id, callback, timeoutInterval, callStack) {
         this.parent = parent;
         this.id = id;
         this.callback = callback;
         this.timeoutInterval = timeoutInterval;
+        this.callStack = callStack;
     }
     return AfterEach;
 }());
 exports.AfterEach = AfterEach;
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 var BeforeEach = (function () {
-    function BeforeEach(parent, id, callback, timeoutInterval) {
+    function BeforeEach(parent, id, callback, timeoutInterval, callStack) {
         this.parent = parent;
         this.id = id;
         this.callback = callback;
         this.timeoutInterval = timeoutInterval;
+        this.callStack = callStack;
     }
     return BeforeEach;
 }());
 exports.BeforeEach = BeforeEach;
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 var Describe = (function () {
     function Describe(id, label, callback, parent, excluded) {
@@ -912,15 +1158,20 @@ var Describe = (function () {
         this.beforeEach = null;
         this.afterEach = null;
         this.isA = "Describe";
+        this.passed = true;
     }
     return Describe;
 }());
 exports.Describe = Describe;
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
+var hierarchy_1 = require("./hierarchy");
+/**
+* returns an It ancestor hierarchy
+*/
 var It = (function () {
-    function It(parent, id, label, callback, excluded, timeoutInterval) {
+    function It(parent, id, label, callback, excluded, timeoutInterval, callStack) {
         if (excluded === void 0) { excluded = false; }
         this.parent = parent;
         this.id = id;
@@ -928,15 +1179,19 @@ var It = (function () {
         this.callback = callback;
         this.excluded = excluded;
         this.timeoutInterval = timeoutInterval;
+        this.callStack = callStack;
         this.expectations = [];
         this.scope = {};
         this.isA = "It";
+        this.passed = true;
+        this.hierarchy = hierarchy_1.ancestorHierarchy(parent);
+        this.reasons = [];
     }
     return It;
 }());
 exports.It = It;
 
-},{}],18:[function(require,module,exports){
+},{"./hierarchy":21}],19:[function(require,module,exports){
 /**
  * QueueManager
  * Periodically checks the length of the queue.
@@ -944,6 +1199,8 @@ exports.It = It;
  * signals that the queue is ready to be processed.
  */
 "use strict";
+;
+;
 var QueueManager = (function () {
     function QueueManager(timerInterval, stableRetryCount, Q /** see Note above */) {
         this.timerInterval = timerInterval;
@@ -976,21 +1233,58 @@ var QueueManager = (function () {
         }, this.timerInterval);
         return deferred.promise;
     };
+    QueueManager.startTimer = function () {
+        QueueManager.queueManagerStats.timeKeeper.startTime = Date.now();
+    };
+    QueueManager.stopTimer = function () {
+        QueueManager.queueManagerStats.timeKeeper.endTime = Date.now();
+        QueueManager.queueManagerStats.timeKeeper.totTime =
+            QueueManager.queueManagerStats.timeKeeper.endTime -
+                QueueManager.queueManagerStats.timeKeeper.startTime;
+    };
+    QueueManager.bumpTotDescribesCount = function () {
+        QueueManager.queueManagerStats.totDescribes++;
+    };
+    QueueManager.bumpTotExcDescribesCount = function () {
+        QueueManager.queueManagerStats.totExcDescribes++;
+    };
+    QueueManager.bumpTotItsCount = function () {
+        QueueManager.queueManagerStats.totIts++;
+    };
+    QueueManager.bumpTotExcItsCount = function () {
+        QueueManager.queueManagerStats.totExcIts++;
+    };
+    QueueManager.bumpTotFailedItsCount = function () {
+        QueueManager.queueManagerStats.totFailedIts++;
+    };
     QueueManager.queue = [];
-    QueueManager.totIts = 0;
-    QueueManager.totExclIts = 0;
+    QueueManager.queueManagerStats = {
+        totDescribes: 0,
+        totExcDescribes: 0,
+        totIts: 0,
+        totExcIts: 0,
+        totFailedIts: 0,
+        timeKeeper: {
+            startTime: 0,
+            endTime: 0,
+            totTime: 0
+        }
+    };
     return QueueManager;
 }());
 exports.QueueManager = QueueManager;
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
+var QueueManager_1 = require("./QueueManager");
 require("../../polyfills/Object.assign"); // prevent eliding import
-// TODO(JS): Add .fail api to done???
+// TODO(JS): Show .fails (i.e. timeouts) in the done???
 var QueueRunner = (function () {
-    function QueueRunner(queue, configTimeoutInterval, Q) {
+    function QueueRunner(queue, configTimeoutInterval, queueManager, reportDispatch, Q) {
         this.queue = queue;
         this.configTimeoutInterval = configTimeoutInterval;
+        this.queueManager = queueManager;
+        this.reportDispatch = reportDispatch;
         this.Q = Q;
     }
     /**
@@ -1002,24 +1296,34 @@ var QueueRunner = (function () {
      * Example:
      * beforeEach(function(done) {...}, 1);
      */
-    QueueRunner.prototype.runBeforeItAfter = function (fn, context) {
+    QueueRunner.prototype.runBeforeItAfter = function (fn, context, timeoutInterval) {
         var deferred = this.Q.defer();
         setTimeout(function () {
+            var resolve = function () {
+                if (deferred.promise.isPending()) {
+                    deferred.resolve();
+                }
+            };
             if (fn.length) {
                 // Asynchronously calls fn passing callback for done parameter
                 setTimeout(function () {
-                    fn.call(context, function () {
-                        deferred.resolve();
-                    });
+                    fn.call(context, function () { return resolve(); });
                 }, 1);
             }
             else {
                 // Synchronously calls fn
                 setTimeout(function () {
                     fn.call(context);
-                    deferred.resolve();
+                    resolve();
                 }, 1);
             }
+            // a timer that expires after timeoutInterval miliseconds
+            setTimeout(function () {
+                if (deferred.promise.isPending()) {
+                    // timedOut = true;
+                    deferred.reject(new Error("timed out after " + timeoutInterval + "ms"));
+                }
+            }, timeoutInterval);
         }, 1);
         // Immediately return a promise to the caller.
         return deferred.promise;
@@ -1027,12 +1331,13 @@ var QueueRunner = (function () {
     /**
      * runs ancestor hierarchy of BeforeEach with inherited contexts
      */
+    // TODO(js): combine runBefores and runAfters into one routine using a callback to determine whether to run the before or after
     QueueRunner.prototype.runBefores = function (hierarchy) {
         var _this = this;
         var deferred = this.Q.defer();
         var runner = function (ndx) {
             setTimeout(function () {
-                if (ndx < hierarchy.length) {
+                if (ndx < hierarchy.length && deferred.promise.isPending()) {
                     // setup the context for calling BeforeEach.callback
                     // if it is not the 1st ([0]) item in the array
                     if (ndx) {
@@ -1046,16 +1351,19 @@ var QueueRunner = (function () {
                     if (hierarchy[ndx].beforeEach) {
                         var ms = hierarchy[ndx].beforeEach.timeoutInterval > 0
                             && hierarchy[ndx].beforeEach.timeoutInterval || _this.configTimeoutInterval;
-                        _this.runBeforeItAfter(hierarchy[ndx].beforeEach.callback, hierarchy[ndx].context)
-                            .timeout(ms, "beforeEach timed out after " + ms + " miliseconds")
-                            .then(function () { return runner(++ndx); }, function (error) { return deferred.reject(error); });
+                        _this.runBeforeItAfter(hierarchy[ndx].beforeEach.callback, hierarchy[ndx].context, ms)
+                            .then(function () { return runner(++ndx); }, function (error) {
+                            deferred.reject(new Error("beforeEach " + error.message));
+                        });
                     }
                     else {
                         runner(++ndx);
                     }
                 }
                 else {
-                    deferred.resolve();
+                    if (deferred.promise.isPending()) {
+                        deferred.resolve();
+                    }
                 }
             }, 1);
         };
@@ -1065,32 +1373,39 @@ var QueueRunner = (function () {
     /**
      * runs ancestor hierarchy of AfterEach with inherited contexts
      */
+    // TODO(js): combine runBefores and runAfters into one routine using a callback to determine whether to run the before or after
     QueueRunner.prototype.runAfters = function (hierarchy) {
         var _this = this;
         var deferred = this.Q.defer();
         var runner = function (ndx) {
             setTimeout(function () {
-                if (ndx < hierarchy.length) {
-                    // setup the context for calling afterEach.callback
+                if (ndx < hierarchy.length && deferred.promise.isPending()) {
+                    // setup the context for calling BeforeEach.callback
                     // if it is not the 1st ([0]) item in the array
                     if (ndx) {
-                        // the current context is a result of applying its parent's context values ontop of its own current values
-                        Object.assign(hierarchy[ndx].context, hierarchy[ndx - 1].context);
+                        // the current context is a result of applying its parent's context values to a blank object
+                        hierarchy[ndx].context = Object.assign({}, hierarchy[ndx - 1].context);
                         console.log("afterEach context for " + hierarchy[ndx].label, hierarchy[ndx].context);
+                    }
+                    else {
+                        hierarchy[ndx].context = {};
                     }
                     if (hierarchy[ndx].afterEach) {
                         var ms = hierarchy[ndx].afterEach.timeoutInterval > 0
                             && hierarchy[ndx].afterEach.timeoutInterval || _this.configTimeoutInterval;
-                        _this.runBeforeItAfter(hierarchy[ndx].afterEach.callback, hierarchy[ndx].context)
-                            .timeout(ms, "afterEach timed out after " + ms + " miliseconds")
-                            .then(function () { return runner(++ndx); }, function (error) { return deferred.reject(error); });
+                        _this.runBeforeItAfter(hierarchy[ndx].afterEach.callback, hierarchy[ndx].context, ms)
+                            .then(function () { return runner(++ndx); }, function (error) {
+                            deferred.reject(new Error("afterEach " + error.message));
+                        });
                     }
                     else {
                         runner(++ndx);
                     }
                 }
                 else {
-                    deferred.resolve();
+                    if (deferred.promise.isPending()) {
+                        deferred.resolve();
+                    }
                 }
             }, 1);
         };
@@ -1103,33 +1418,46 @@ var QueueRunner = (function () {
     QueueRunner.prototype.runIt = function (it) {
         var _this = this;
         var deferred = this.Q.defer();
-        var hierarchy = this.getAncestorHierarchy(it.parent);
         var ms = it.timeoutInterval > 0 && it.timeoutInterval || this.configTimeoutInterval;
         setTimeout(function () {
-            exports.currentIt = it;
-            _this.runBefores(hierarchy)
-                .then(function () {
-                return _this.runBeforeItAfter(it.callback, it.parent.context)
-                    .timeout(ms, "it." + it.label + " timed out after " + ms + " miliseconds");
-            })
-                .then(function () { return _this.runAfters(hierarchy); })
-                .then(function () { return deferred.resolve(); }, function (error) { return deferred.reject(error); });
+            _this.runBeforeItAfter(it.callback, it.parent.context, ms).
+                then(function () {
+                deferred.resolve();
+            }, function (error) {
+                deferred.reject(new Error("it " + error.message));
+            });
         }, 1);
         return deferred.promise;
     };
     /**
-     * build and return an ancestor hierarchy
+     * run before/it/after block
      */
-    QueueRunner.prototype.getAncestorHierarchy = function (describe) {
-        var parent = describe;
-        var hierarchy = [];
-        // build ancestor hierarchy adding parent to the top of the hierarcy
-        while (parent) {
-            hierarchy.unshift(parent);
-            parent = parent.parent;
-        }
-        // return ancestor hierarchy
-        return hierarchy;
+    QueueRunner.prototype.runBIA = function (it) {
+        var _this = this;
+        var deferred = this.Q.defer();
+        setTimeout(function () {
+            exports.currentIt = it;
+            _this.runBefores(it.hierarchy).then(function () {
+                _this.runIt(it).then(function () {
+                    _this.runAfters(it.hierarchy).then(function () {
+                        deferred.resolve();
+                    }, function (error) {
+                        it.reasons.push({ reason: error.message, stackTrace: it.parent.afterEach.callStack });
+                        it.passed = false;
+                        deferred.reject(error);
+                    });
+                }, function (error) {
+                    it.reasons.push({ reason: error.message, stackTrace: it.callStack });
+                    it.passed = false;
+                    deferred.reject(error);
+                });
+            }, function (error) {
+                it.reasons.push({ reason: error.message, stackTrace: it.parent.beforeEach.callStack });
+                it.passed = false;
+                deferred.reject(error);
+            });
+        }, 1);
+        return deferred.promise;
     };
     /**
      * recursively iterates through all the queue's Its
@@ -1138,20 +1466,34 @@ var QueueRunner = (function () {
     QueueRunner.prototype.run = function () {
         var _this = this;
         var deferred = this.Q.defer();
-        var its = this.queue.filter(function (element) {
-            return element.isA === "It";
-        });
+        var its = this.queue.filter(function (element) { return element.isA === "It"; });
+        var it;
         // console.log("its", its);
         // recursive iterator
         var runner = function (i) {
             setTimeout(function () {
                 if (i < its.length) {
-                    _this.runIt(its[i])
-                        .then(function () { return runner(++i); })
-                        .fail(function (e) {
-                        console.log(e);
-                        deferred.reject(e);
-                    });
+                    it = its[i];
+                    // TODO(js): is parent.excluded check really needed????
+                    if (it.excluded || it.parent.excluded) {
+                        _this.reportDispatch.reportSpec(it);
+                        runner(++i);
+                    }
+                    else {
+                        _this.runBIA(it).then(function () {
+                            if (!it.passed) {
+                                QueueManager_1.QueueManager.bumpTotFailedItsCount();
+                            }
+                            _this.reportDispatch.reportSummary();
+                            _this.reportDispatch.reportSpec(it);
+                            runner(++i);
+                        }).fail(function () {
+                            // an it timed out or one or more expectations failed
+                            _this.reportDispatch.reportSummary();
+                            _this.reportDispatch.reportSpec(it);
+                            runner(++i);
+                        });
+                    }
                 }
                 else {
                     deferred.resolve();
@@ -1167,7 +1509,175 @@ var QueueRunner = (function () {
 }());
 exports.QueueRunner = QueueRunner;
 
-},{"../../polyfills/Object.assign":22}],20:[function(require,module,exports){
+},{"../../polyfills/Object.assign":27,"./QueueManager":19}],21:[function(require,module,exports){
+"use strict";
+function ancestorHierarchy(item) {
+    var parent = item;
+    var hierarchy = [];
+    // build ancestor hierarchy adding parent to the top of the hierarcy
+    while (parent) {
+        hierarchy.unshift(parent);
+        parent = parent.parent;
+    }
+    // return ancestor hierarchy
+    return hierarchy;
+}
+exports.ancestorHierarchy = ancestorHierarchy;
+;
+function descendantHierarchy(queue, item) {
+    var child;
+    var hierarchy = [];
+    // returns an array of all queue items whose parent is aChild
+    var searchQueueForChidren = function (aChild) {
+        var t = [];
+        queue.forEach(function (item) {
+            if (item.parent && item.parent.id === aChild.id) {
+                t.push(item);
+            }
+        });
+        return t;
+    };
+    // buid descendant hierarchy adding children to the bottom of the hierarch
+    var buildHierarchy = function (item) {
+        hierarchy.push(item);
+        searchQueueForChidren(item).forEach(function (child) { return buildHierarchy(child); });
+    };
+    buildHierarchy(item);
+    return hierarchy;
+}
+exports.descendantHierarchy = descendantHierarchy;
+
+},{}],22:[function(require,module,exports){
+"use strict";
+var hierarchy_1 = require("./hierarchy");
+/**
+ * Returns a subset of quueue that matches filter.
+ */
+function queueFilter(queue, queueManagerStats, filter) {
+    var target;
+    var result;
+    var originalTotItCount = queueManagerStats.totIts;
+    var count = 0;
+    if (!filter.length) {
+        return queue;
+    }
+    // find the item whose id matches the filter and push it onto the hierarchy
+    queue.some(function (item) {
+        if (item.id === filter) {
+            target = item;
+            return true;
+        }
+    });
+    // find descendants
+    result = hierarchy_1.descendantHierarchy(queue, target);
+    // set the queue's total its count
+    queueManagerStats.totIts = result.reduce(function (prev, curr) {
+        return curr.isA === "It" && prev + 1 || prev;
+    }, 0);
+    // set the queue's excluded count
+    queueManagerStats.totExcIts = result.reduce(function (prev, curr) {
+        return curr.isA === "It" && curr.excluded && prev + 1 || prev;
+    }, 0);
+    // set the queue's filtered count
+    queueManagerStats.totFiltered = originalTotItCount - queueManagerStats.totIts;
+    return hierarchy_1.descendantHierarchy(queue, target);
+}
+exports.queueFilter = queueFilter;
+
+},{"./hierarchy":21}],23:[function(require,module,exports){
+"use strict";
+var ReportDispatch = (function () {
+    function ReportDispatch() {
+    }
+    ReportDispatch.prototype.reportBegin = function (configOptions) {
+        this._configOptions = configOptions;
+        this._reporters.forEach(function (report) { return report.reportBegin(configOptions); });
+    };
+    ReportDispatch.prototype.reportSummary = function () {
+        var _this = this;
+        this._reporters.forEach(function (report) { return report.reportSummary(_this._queueManagerStats); });
+    };
+    ReportDispatch.prototype.reportSuite = function () {
+    };
+    ReportDispatch.prototype.reportSpec = function (it) {
+        // TODO(js): call reportSummary here to also update summary infor - this will require some refactoring because the QueueManager isn't referenced in this module.
+        this._reporters.forEach(function (report) { return report.reportSpec(it); });
+    };
+    ReportDispatch.prototype.reportEnd = function () {
+    };
+    Object.defineProperty(ReportDispatch.prototype, "reporters", {
+        set: function (reporters) {
+            this._reporters = reporters;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ReportDispatch.prototype, "queueManagerStats", {
+        set: function (stats) {
+            this._queueManagerStats = stats;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return ReportDispatch;
+}());
+exports.ReportDispatch = ReportDispatch;
+exports.reportDispatch = new ReportDispatch();
+
+},{}],24:[function(require,module,exports){
+"use strict";
+var StackTrace = (function () {
+    function StackTrace() {
+        // determine the Error object's stack trace property
+        try {
+            throw new Error("testing for stack or stacktrace");
+        }
+        catch (error) {
+            this.stackTraceProperty = error.stack ? "stack" : error.stacktrace ?
+                "stacktrace" : undefined;
+        }
+    }
+    // TODO(JS): might not want to do this and instead might want to include references to preamble.js or even make it configurable
+    StackTrace.prototype.filterstackTrace = function (st) {
+        var reFileFromStackTrace = /file:\/\/\/\S+\.js:[0-9]+[:0-9]*/g;
+        // Get all file references ...
+        var matches = st.match(reFileFromStackTrace);
+        // ... and return an array of file references except those to preamble.js
+        return matches.filter(function (el) {
+            return el.search(/preamble-ts.js/) === -1;
+        });
+    };
+    StackTrace.prototype.stackTraceFromError = function () {
+        var stackTrace = null;
+        if (this.stackTraceProperty) {
+            try {
+                throw new Error();
+            }
+            catch (error) {
+                stackTrace = error[this.stackTraceProperty];
+            }
+        }
+        return stackTrace;
+    };
+    Object.defineProperty(StackTrace.prototype, "stackTrace", {
+        get: function () {
+            var st;
+            var flt = null;
+            st = this.stackTraceFromError();
+            if (st) {
+                flt = this.filterstackTrace(st);
+            }
+            return flt;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return StackTrace;
+}());
+exports.StackTrace = StackTrace;
+exports.stackTrace = new StackTrace();
+
+},{}],25:[function(require,module,exports){
 /**
  * UniqueNumber
  *
@@ -1190,7 +1700,7 @@ var UniqueNumber = (function () {
 }());
 exports.UniqueNumber = UniqueNumber;
 
-},{}],21:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /**
  * Main entry point module
  */
@@ -1209,11 +1719,19 @@ var configuration_1 = require("./core/configuration/configuration");
 var expect_1 = require("./core/expectations/expect");
 var expect_2 = require("./core/expectations/expect");
 var spy_1 = require("./core/expectations/spy/spy");
+var spy_2 = require("./core/expectations/spy/spy");
+var mock_1 = require("./core/expectations/mock");
 var deeprecursiveequal_1 = require("./core/expectations/comparators/deeprecursiveequal");
 var expect_3 = require("./core/expectations/expect");
+var reportdispatch_1 = require("./core/reporters/reportdispatch");
+var queueFilter_1 = require("./core/queue/queueFilter");
 require("./core/configuration/configuration"); // prevent eliding import
-// import "./core/expectations/matchers/matchers"; // prevent eliding import
-var reporter;
+var pkgJSON = require("../package.json");
+var reporters;
+// turn on long stact support in Q
+Q.longStackSupport = true;
+// give reportDispatch access to the queuManager
+reportdispatch_1.reportDispatch.queueManagerStats = QueueManager_1.QueueManager.queueManagerStats;
 // Configure based on environment
 if (environment_1.environment.windows) {
     // add APIs used by suites to the window object
@@ -1225,51 +1743,81 @@ if (environment_1.environment.windows) {
     window["afterEach"] = afterEach_1.afterEach;
     window["expect"] = expect_1.expect;
     window["spyOn"] = spy_1.spyOn;
-    // add reporter plugin
-    if (window.hasOwnProperty("preamble") &&
-        window["preamble"].hasOwnProperty("reporter")) {
-        reporter = window["preamble"]["reporter"];
-    }
-    if (!reporter) {
-        console.log("No reporter found");
-        throw new Error("No reporter found");
-    }
-    // call each matcher plugin to register their matchers
-    if (window.hasOwnProperty("preamble") &&
-        window["preamble"].hasOwnProperty("registerMatchers")) {
-        var registerMatchers = window["preamble"]["registerMatchers"];
-        registerMatchers.forEach(function (rm) {
-            return rm(expect_2.registerMatcher, { deepRecursiveCompare: deeprecursiveequal_1.deepRecursiveCompare });
+    window["spyOnN"] = spy_2.spyOnN;
+    window["mock"] = mock_1.mock;
+    if (window.hasOwnProperty("preamble")) {
+        // add reporter plugin
+        if (window["preamble"].hasOwnProperty("reporters")) {
+            reporters = window["preamble"]["reporters"];
+            // hand off reporters to the ReportDispatch
+            reportdispatch_1.reportDispatch.reporters = reporters;
+        }
+        if (!reporters || !reporters.length) {
+            console.log("No reporters found");
+            throw new Error("No reporters found");
+        }
+        // dispatch reportBegin to reporters
+        reportdispatch_1.reportDispatch.reportBegin({
+            version: pkgJSON.version,
+            uiTestContainerId: configuration_1.configuration.uiTestContainerId,
+            name: configuration_1.configuration.name,
+            hidePassedTests: configuration_1.configuration.hidePassedTests
         });
+        // expose registerMatcher for one-off in-line matcher registration
+        window["preamble"]["registerMatcher"] = expect_2.registerMatcher;
+        // call each matcher plugin to register their matchers
+        if (window["preamble"].hasOwnProperty("registerMatchers")) {
+            var registerMatchers = window["preamble"]["registerMatchers"];
+            registerMatchers.forEach(function (rm) {
+                return rm(expect_2.registerMatcher, { deepRecursiveCompare: deeprecursiveequal_1.deepRecursiveCompare });
+            });
+            if (!expect_3.matchersCount()) {
+                console.log("No matchers registered");
+                throw new Error("No matchers found");
+            }
+        }
+        else {
+            // no matcher plugins found but matchers can be
+            // registered inline so just log it but don't
+            // throw an exception
+            console.log("No matcher plugins found");
+        }
+        // expose Q on wondow.preamble
+        window["preamble"].Q = Q;
     }
-    if (!expect_3.matchersCount()) {
-        console.log("No matchers found");
-        throw new Error("No matchers found");
+    else {
+        console.log("No plugins found");
+        throw new Error("No plugins found");
     }
-    // expose registerMatcher for one-off in-line matcher registration
-    window["preamble"]["registerMatcher"] = expect_2.registerMatcher;
 }
 else {
     throw new Error("Unsuported environment");
 }
-var timeKeeper = {
-    startTime: Date.now(),
-    endTime: 0,
-    totTime: 0
-};
+// the raw filter looks like "?filter=spec_n" or "?filter=suite_n" where n is some number
+var filter = window.location.search.substring(window.location.search.indexOf("_") + 1);
+console.log("filter =", filter);
+// dspatch reportSummary to all reporters
+reportdispatch_1.reportDispatch.reportSummary();
 // get a queue manager and call its run method to run the test suite
-new QueueManager_1.QueueManager(100, 2, Q)
-    .run()
+var queueManager = new QueueManager_1.QueueManager(100, 2, Q);
+QueueManager_1.QueueManager.startTimer();
+queueManager.run()
     .then(function (msg) {
     // fulfilled/success
     console.log(msg);
     console.log("QueueManager.queue =", QueueManager_1.QueueManager.queue);
+    // dispatch reportSummary to all reporters
+    reportdispatch_1.reportDispatch.reportSummary();
     // run the queue
-    new QueueRunner_1.QueueRunner(QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, Q).run()
+    new QueueRunner_1.QueueRunner(filter && queueFilter_1.queueFilter(QueueManager_1.QueueManager.queue, QueueManager_1.QueueManager.queueManagerStats, filter) || QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, queueManager, reportdispatch_1.reportDispatch, Q).run()
         .then(function () {
-        timeKeeper.endTime = Date.now();
-        timeKeeper.totTime = timeKeeper.endTime - timeKeeper.startTime;
-        console.log("queue ran successfully in " + timeKeeper.totTime + " miliseconds");
+        var totFailedIts = QueueManager_1.QueueManager.queue.reduce(function (prev, curr) {
+            return curr.isA === "It" && !curr.passed ? prev + 1 : prev;
+        }, 0);
+        QueueManager_1.QueueManager.stopTimer();
+        console.log("queue ran successfully in " + QueueManager_1.QueueManager.queueManagerStats.timeKeeper.totTime + " miliseconds");
+        // dispatch reportSummary to all reporters
+        reportdispatch_1.reportDispatch.reportSummary();
     }, function () {
         console.log("queue failed to run");
     });
@@ -1278,7 +1826,7 @@ new QueueManager_1.QueueManager(100, 2, Q)
     console.log(msg);
 });
 
-},{"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/spy/spy":13,"./core/queue/QueueManager":18,"./core/queue/QueueRunner":19,"q":24}],22:[function(require,module,exports){
+},{"../package.json":30,"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/mock":13,"./core/expectations/spy/spy":14,"./core/queue/QueueManager":19,"./core/queue/QueueRunner":20,"./core/queue/queueFilter":22,"./core/reporters/reportdispatch":23,"q":29}],27:[function(require,module,exports){
 if (typeof Object.assign !== "function") {
     (function () {
         Object.assign = function (target) {
@@ -1302,7 +1850,7 @@ if (typeof Object.assign !== "function") {
     })();
 }
 
-},{}],23:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1395,7 +1943,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],24:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -3447,4 +3995,25 @@ return Q;
 });
 
 }).call(this,require('_process'))
-},{"_process":23}]},{},[21]);
+},{"_process":28}],30:[function(require,module,exports){
+module.exports={
+  "name": "preamble-ts",
+  "version": "0.1.0",
+  "description": "Preamble.ts the BDD test runner Reborn! Now written using TypeScript",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jeffrey Schwartz",
+  "license": "MIT",
+  "dependencies": {
+    "q": "^1.4.1"
+  },
+  "devDependencies": {
+    "browserify": "^13.0.0",
+    "gulp": "^3.9.1",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}
+
+},{}]},{},[26]);

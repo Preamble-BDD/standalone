@@ -1,0 +1,110 @@
+body {
+    margin: 52px 0 52px 0;
+    font-size: 1em;
+    font-family: sans-serif;
+}
+/* list tags */
+ul {
+    list-style: none;
+    padding-left: 20px;
+}
+/* summary info */
+.preamble-summary {
+    box-sizing: border-box;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    overflow: hidden;
+    padding: .25em .5em;
+    color: white;
+    background-color: black;
+}
+.preamble-summary-hidden {
+    display: none;
+}
+.preamble-summary-pending {
+    background-color: #bdbdbd;
+    display: block;
+}
+.preamble-summary-pass {
+    background-color: green;
+}
+.preamble-summary-fail {
+    background-color: red;
+}
+.preamble-summary span {
+    color: white;
+}
+.preamble-summary-duration {
+    float: right;
+}
+.preamble-summary-duration-hidden {
+    visibility: hidden;
+}
+
+.preamble-summary-duration span {
+    font-size: .75em;
+}
+/* suite */
+.suite {
+}
+.suite-passed a {
+    color: black;
+    text-decoration: none;
+}
+.suite-failed a {
+    color: red;
+    text-decoration: none;
+}
+.suite-hidden {
+    display: none;
+}
+/* spec */
+.spec {
+}
+.spec-passed a {
+    color: green;
+    text-decoration: none;
+}
+.spec-failed a {
+    color: red;
+    text-decoration: none;
+}
+/* suite * spec */
+.suite-excluded,
+.spec-excluded {
+    color: brown;
+}
+/* reason */
+.reason, .reason-stacktrace, .reason-stacktrace-item{
+    color: red;
+}
+/* user interface test container */
+#preamble-ui-container {
+    position: absolute;
+    top: -10000px;
+    left: -10000px;
+    width: 1000px;
+    height: 1000px;
+}
+/* bottom page container */
+footer {
+    box-sizing: border-box;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    overflow: hidden;
+    padding: 8px 0;
+    border-top: solid 1px #bdbdbd;
+    text-align: center;
+    background-color: white;
+    color: #bdbdbd;
+}
+/* run all anchor tag */
+a.runall {
+    color: white;
+}
+/* all anchor tags */
+a:hover {
+    text-decoration: underline;
+}
