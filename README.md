@@ -1,8 +1,8 @@
 # Preamble-TS-Standalone
-The default Preamble-TS "in the browser" test environment.
+The default [Preamble-TS](https://github.com/Preamble-BDD/preamble.ts) "in the browser" test environment.
 
 ## Installation
-Download or clone the [Preamble-Standalone](https://github.com/Preamble-BDD/standalone), which includes everything you need to author and run your tests, all wrapped up in one tidy repo:
+Download or clone the [Preamble-Standalone](https://github.com/Preamble-BDD/standalone) repo, which includes everything you need to author and run your tests, all wrapped up in one tidy repo:
 
 * SpecRunner.html - a spec runner html file
 * dist/core/matchers/preamble-matchers.js - the default matchers via a matchers plugin
