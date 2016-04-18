@@ -3998,7 +3998,7 @@ return Q;
 },{"_process":28}],30:[function(require,module,exports){
 module.exports={
   "name": "preamble-ts",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Preamble.ts the BDD test runner Reborn! Now written using TypeScript",
   "main": "index.js",
   "scripts": {
