@@ -3998,8 +3998,8 @@ return Q;
 },{"_process":28}],30:[function(require,module,exports){
 module.exports={
   "name": "preamble-ts",
-  "version": "0.0.0-b0.1.0",
-  "description": "Preamble.ts the BDD test runner Reborn!",
+  "version": "0.1.0",
+  "description": "Preamble.ts the BDD test runner Reborn! Now written using TypeScript",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
