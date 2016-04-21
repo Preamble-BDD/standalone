@@ -307,6 +307,9 @@ if (typeof (window) !== "undefined") {
 else if (typeof (global) !== "undefined") {
     preambleGlobal = global;
 }
+else {
+    throw new Error("Unsuported Environment");
+}
 exports.pGlobal = preambleGlobal;
 console.log("preambleGlobal", preambleGlobal);
 
@@ -1705,7 +1708,6 @@ var deeprecursiveequal_1 = require("./core/expectations/comparators/deeprecursiv
 var expect_3 = require("./core/expectations/expect");
 var reportdispatch_1 = require("./core/reporters/reportdispatch");
 var queueFilter_1 = require("./core/queue/queueFilter");
-require("./core/configuration/configuration"); // prevent eliding import
 var pkgJSON = require("../package.json");
 var reporters;
 // turn on long stact support in Q
@@ -3973,7 +3975,7 @@ module.exports={
   "name": "preamble-ts",
   "version": "0.2.1",
   "description": "Preamble.ts the BDD test runner Reborn! Now written using TypeScript",
-  "main": "index.js",
+  "main": "dist/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
