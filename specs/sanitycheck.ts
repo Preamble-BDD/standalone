@@ -1,5 +1,3 @@
-"use strict";
-
 describe(`"describe" is used to describe a suite which can contain one or more specs`, function() {
     it(`and "it" is used to describe a spec and is used to group one or more expectations"`, function() {
         expect(true).toBeTrue();

@@ -5,7 +5,14 @@
 
 "use strict";
 
-window.preambleConfig = {
+var preambleGlobal;
+if (typeof(window) !== "undefined") {
+    preambleGlobal = window;
+} else if (typeof(global) !== "undefined") {
+    preambleGlobal = global;
+}
+
+preambleGlobal.preambleConfig = {
     windowGlobals: true,
     timeoutInterval: 5000,
     name: "Sanity Check",

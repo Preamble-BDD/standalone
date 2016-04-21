@@ -7,7 +7,7 @@
 var AfterEach_1 = require("../queue/AfterEach");
 var callstack_1 = require("./callstack");
 var StackTrace_1 = require("../stacktrace/StackTrace");
-function afterEach(callback, timeoutInterval) {
+exports.afterEach = function (callback, timeoutInterval) {
     if (timeoutInterval === void 0) { timeoutInterval = 0; }
     var _afterEach;
     if (arguments.length !== 1 && arguments.length !== 2) {
@@ -23,8 +23,7 @@ function afterEach(callback, timeoutInterval) {
     _afterEach = new AfterEach_1.AfterEach(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), callback, timeoutInterval, StackTrace_1.stackTrace.stackTrace);
     // add it to its parent describe
     callstack_1.callStack.getTopOfStack().afterEach = _afterEach;
-}
-exports.afterEach = afterEach;
+};
 
 },{"../queue/AfterEach":15,"../stacktrace/StackTrace":24,"./callstack":3}],2:[function(require,module,exports){
 /**
@@ -35,7 +34,7 @@ exports.afterEach = afterEach;
 var BeforeEach_1 = require("../queue/BeforeEach");
 var callstack_1 = require("./callstack");
 var StackTrace_1 = require("../stacktrace/StackTrace");
-function beforeEach(callback, timeoutInterval) {
+exports.beforeEach = function (callback, timeoutInterval) {
     if (timeoutInterval === void 0) { timeoutInterval = 0; }
     var _beforeEach;
     if (arguments.length !== 1 && arguments.length !== 2) {
@@ -51,8 +50,7 @@ function beforeEach(callback, timeoutInterval) {
     _beforeEach = new BeforeEach_1.BeforeEach(callstack_1.callStack.getTopOfStack(), callstack_1.callStack.uniqueId.toString(), callback, timeoutInterval, StackTrace_1.stackTrace.stackTrace);
     // add it to its parent describe
     callstack_1.callStack.getTopOfStack().beforeEach = _beforeEach;
-}
-exports.beforeEach = beforeEach;
+};
 
 },{"../queue/BeforeEach":16,"../stacktrace/StackTrace":24,"./callstack":3}],3:[function(require,module,exports){
 "use strict";
@@ -69,7 +67,7 @@ exports.callStack = new CallStack_1.CallStack(new UniqueNumber_1.UniqueNumber())
 var callstack_1 = require("./callstack");
 var Describe_1 = require("../queue/Describe");
 var QueueManager_1 = require("../queue/QueueManager");
-function describe(label, callback) {
+exports.describe = function (label, callback) {
     var _describe;
     var excluded;
     if (arguments.length !== 2 || typeof (arguments[0])
@@ -104,8 +102,7 @@ function describe(label, callback) {
     }
     // pop Describe object off of the callstack
     callstack_1.callStack.popDescribe();
-}
-exports.describe = describe;
+};
 
 },{"../queue/Describe":17,"../queue/QueueManager":19,"./callstack":3}],5:[function(require,module,exports){
 /**
@@ -117,7 +114,7 @@ var It_1 = require("../queue/It");
 var callstack_1 = require("./callstack");
 var QueueManager_1 = require("../queue/QueueManager");
 var StackTrace_1 = require("../stacktrace/StackTrace");
-function it(label, callback, timeoutInterval) {
+exports.it = function (label, callback, timeoutInterval) {
     if (timeoutInterval === void 0) { timeoutInterval = 0; }
     var _it;
     var excluded;
@@ -144,8 +141,7 @@ function it(label, callback, timeoutInterval) {
     if (excluded) {
         QueueManager_1.QueueManager.bumpTotExcItsCount();
     }
-}
-exports.it = it;
+};
 
 },{"../queue/It":18,"../queue/QueueManager":19,"../stacktrace/StackTrace":24,"./callstack":3}],6:[function(require,module,exports){
 /**
@@ -157,10 +153,7 @@ exports.it = it;
 var callstack_1 = require("./callstack");
 var Describe_1 = require("../queue/Describe");
 var QueueManager_1 = require("../queue/QueueManager");
-/**
- * counter is used to maintain of recursion counter
- */
-function xdescribe(label, callback) {
+exports.xdescribe = function (label, callback) {
     var _describe;
     if (arguments.length !== 2 || typeof (arguments[0])
         !== "string" || typeof (arguments[1]) !== "function") {
@@ -187,8 +180,7 @@ function xdescribe(label, callback) {
     }
     // pop Describe object off of the callstack
     callstack_1.callStack.popDescribe();
-}
-exports.xdescribe = xdescribe;
+};
 
 },{"../queue/Describe":17,"../queue/QueueManager":19,"./callstack":3}],7:[function(require,module,exports){
 /**
@@ -201,7 +193,7 @@ var It_1 = require("../queue/It");
 var callstack_1 = require("./callstack");
 var QueueManager_1 = require("../queue/QueueManager");
 var StackTrace_1 = require("../stacktrace/StackTrace");
-function xit(label, callback, timeoutInterval) {
+exports.xit = function (label, callback, timeoutInterval) {
     if (timeoutInterval === void 0) { timeoutInterval = 0; }
     var _it;
     if (arguments.length !== 2 && arguments.length !== 3) {
@@ -221,8 +213,7 @@ function xit(label, callback, timeoutInterval) {
     QueueManager_1.QueueManager.bumpTotItsCount();
     // Increment totExclIts count
     QueueManager_1.QueueManager.bumpTotExcItsCount();
-}
-exports.xit = xit;
+};
 
 },{"../queue/It":18,"../queue/QueueManager":19,"../stacktrace/StackTrace":24,"./callstack":3}],8:[function(require,module,exports){
 /**
@@ -286,51 +277,40 @@ exports.CallStack = CallStack;
  * Environment Dependent Configuration
  */
 "use strict";
+// import {environment} from "../environment/environment";
 var environment_1 = require("../environment/environment");
 require("../../polyfills/Object.assign"); // prevent eliding import
-/**
- * Windows environment configuration
- */
-function windowsConfiguration() {
-    var defaultConfiguration = {
-        windowGlobals: true,
-        timeoutInterval: 5000,
-        name: "Suite",
-        uiTestContainerId: "preamble-ui-container",
-        hidePassedTests: false,
-        shortCircuit: false
-    };
-    if (window["preambleConfig"]) {
-        exports.configuration = Object.assign({}, defaultConfiguration, window["preambleConfig"]);
-    }
-    else {
-        exports.configuration = defaultConfiguration;
-    }
-    // log merged configuration
-    console.log("Windows Configuration", exports.configuration);
-}
-/**
- * NodeJS environment configuration
- */
-function nodeConfiguration() {
-}
-if (environment_1.environment.windows) {
-    windowsConfiguration();
+var defaultConfiguration = {
+    // windowGlobals: true,
+    timeoutInterval: 5000,
+    name: "Suite",
+    uiTestContainerId: "preamble-ui-container",
+    hidePassedTests: false,
+    shortCircuit: false
+};
+if (environment_1.pGlobal.preambleConfig) {
+    exports.configuration = Object.assign({}, defaultConfiguration, environment_1.pGlobal.preambleConfig);
 }
 else {
-    nodeConfiguration();
+    exports.configuration = defaultConfiguration;
 }
+// log merged configuration
+console.log("configuration", exports.configuration);
 
 },{"../../polyfills/Object.assign":27,"../environment/environment":10}],10:[function(require,module,exports){
-/**
- * environment
- */
+(function (global){
 "use strict";
-var windows = typeof (window) !== "undefined" && window.document && true || false;
-exports.environment = {
-    windows: windows
-};
+var preambleGlobal;
+if (typeof (window) !== "undefined") {
+    preambleGlobal = window;
+}
+else if (typeof (global) !== "undefined") {
+    preambleGlobal = global;
+}
+exports.pGlobal = preambleGlobal;
+console.log("preambleGlobal", preambleGlobal);
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],11:[function(require,module,exports){
 "use strict";
 exports.deepRecursiveCompare = function (a, b) {
@@ -1732,69 +1712,62 @@ var reporters;
 Q.longStackSupport = true;
 // give reportDispatch access to the queuManager
 reportdispatch_1.reportDispatch.queueManagerStats = QueueManager_1.QueueManager.queueManagerStats;
-// Configure based on environment
-if (environment_1.environment.windows) {
-    // add APIs used by suites to the window object
-    window["describe"] = describe_1.describe;
-    window["xdescribe"] = xdescribe_1.xdescribe;
-    window["it"] = it_1.it;
-    window["xit"] = xit_1.xit;
-    window["beforeEach"] = beforeEach_1.beforeEach;
-    window["afterEach"] = afterEach_1.afterEach;
-    window["expect"] = expect_1.expect;
-    window["spyOn"] = spy_1.spyOn;
-    window["spyOnN"] = spy_2.spyOnN;
-    window["mock"] = mock_1.mock;
-    if (window.hasOwnProperty("preamble")) {
-        // add reporter plugin
-        if (window["preamble"].hasOwnProperty("reporters")) {
-            reporters = window["preamble"]["reporters"];
-            // hand off reporters to the ReportDispatch
-            reportdispatch_1.reportDispatch.reporters = reporters;
+// add APIs used by suites to the global object
+environment_1.pGlobal.describe = describe_1.describe;
+environment_1.pGlobal.xdescribe = xdescribe_1.xdescribe;
+environment_1.pGlobal.it = it_1.it;
+environment_1.pGlobal.xit = xit_1.xit;
+environment_1.pGlobal.beforeEach = beforeEach_1.beforeEach;
+environment_1.pGlobal.afterEach = afterEach_1.afterEach;
+environment_1.pGlobal.expect = expect_1.expect;
+environment_1.pGlobal.spyOn = spy_1.spyOn;
+environment_1.pGlobal.spyOnN = spy_2.spyOnN;
+environment_1.pGlobal.mock = mock_1.mock;
+if (environment_1.pGlobal.hasOwnProperty("preamble")) {
+    // add reporter plugin
+    if (environment_1.pGlobal.preamble.hasOwnProperty("reporters")) {
+        reporters = environment_1.pGlobal.preamble.reporters;
+        // hand off reporters to the ReportDispatch
+        reportdispatch_1.reportDispatch.reporters = reporters;
+    }
+    if (!reporters || !reporters.length) {
+        console.log("No reporters found");
+        throw new Error("No reporters found");
+    }
+    // dispatch reportBegin to reporters
+    reportdispatch_1.reportDispatch.reportBegin({
+        version: pkgJSON.version,
+        uiTestContainerId: configuration_1.configuration.uiTestContainerId,
+        name: configuration_1.configuration.name,
+        hidePassedTests: configuration_1.configuration.hidePassedTests
+    });
+    // expose registerMatcher for one-off in-line matcher registration
+    environment_1.pGlobal.preamble.registerMatcher = expect_2.registerMatcher;
+    // call each matcher plugin to register their matchers
+    if (environment_1.pGlobal.preamble.hasOwnProperty("registerMatchers")) {
+        var registerMatchers = environment_1.pGlobal.preamble.registerMatchers;
+        registerMatchers.forEach(function (rm) { return rm(expect_2.registerMatcher, { deepRecursiveCompare: deeprecursiveequal_1.deepRecursiveCompare }); });
+        if (!expect_3.matchersCount()) {
+            console.log("No matchers registered");
+            throw new Error("No matchers found");
         }
-        if (!reporters || !reporters.length) {
-            console.log("No reporters found");
-            throw new Error("No reporters found");
-        }
-        // dispatch reportBegin to reporters
-        reportdispatch_1.reportDispatch.reportBegin({
-            version: pkgJSON.version,
-            uiTestContainerId: configuration_1.configuration.uiTestContainerId,
-            name: configuration_1.configuration.name,
-            hidePassedTests: configuration_1.configuration.hidePassedTests
-        });
-        // expose registerMatcher for one-off in-line matcher registration
-        window["preamble"]["registerMatcher"] = expect_2.registerMatcher;
-        // call each matcher plugin to register their matchers
-        if (window["preamble"].hasOwnProperty("registerMatchers")) {
-            var registerMatchers = window["preamble"]["registerMatchers"];
-            registerMatchers.forEach(function (rm) {
-                return rm(expect_2.registerMatcher, { deepRecursiveCompare: deeprecursiveequal_1.deepRecursiveCompare });
-            });
-            if (!expect_3.matchersCount()) {
-                console.log("No matchers registered");
-                throw new Error("No matchers found");
-            }
-        }
-        else {
-            // no matcher plugins found but matchers can be
-            // registered inline so just log it but don't
-            // throw an exception
-            console.log("No matcher plugins found");
-        }
-        // expose Q on wondow.preamble
-        window["preamble"].Q = Q;
     }
     else {
-        console.log("No plugins found");
-        throw new Error("No plugins found");
+        // no matcher plugins found but matchers can be
+        // registered inline so just log it but don't
+        // throw an exception
+        console.log("No matcher plugins found");
     }
+    // expose Q on wondow.preamble
+    environment_1.pGlobal.preamble.Q = Q;
 }
 else {
-    throw new Error("Unsuported environment");
+    console.log("No plugins found");
+    throw new Error("No plugins found");
 }
 // the raw filter looks like "?filter=spec_n" or "?filter=suite_n" where n is some number
-var filter = window.location.search.substring(window.location.search.indexOf("_") + 1);
+var filter = typeof window === "object" &&
+    window.location.search.substring(window.location.search.indexOf("_") + 1) || null;
 console.log("filter =", filter);
 // dspatch reportSummary to all reporters
 reportdispatch_1.reportDispatch.reportSummary();
