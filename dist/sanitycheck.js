@@ -1,3 +1,5 @@
+var preambleGlobal = typeof window === "object" && window || global;
+var pGlobal = preambleGlobal;
 describe("\"describe\" is used to describe a suite which can contain one or more specs", function () {
     it("and \"it\" is used to describe a spec and is used to group one or more expectations\"", function () {
         expect(true).toBeTrue();
@@ -566,7 +568,7 @@ describe("Calling and.callFake(fn)", function () {
 describe("Q is exposed in the global preamble object for use in suites", function () {
     beforeEach(function (done) {
         var _this = this;
-        window.preamble.Q.delay(150).then(function () {
+        pGlobal.preamble.Q.delay(150).then(function () {
             _this.abc = "abc";
             done();
         });
@@ -576,7 +578,7 @@ describe("Q is exposed in the global preamble object for use in suites", functio
         expect(this.abc).not.toBe("cba");
     });
 });
-window.preamble.registerMatcher({
+pGlobal.preamble.registerMatcher({
     apiName: "toBeAString",
     api: function (matcherValue) { },
     evaluator: function (expectedValue) { return typeof expectedValue === "string"; },
@@ -584,7 +586,7 @@ window.preamble.registerMatcher({
     minArgs: 0,
     maxArgs: 0
 });
-window.preamble.registerMatcher({
+pGlobal.preamble.registerMatcher({
     apiName: "toBeANumber",
     api: function (matcherValue) { },
     evaluator: function (expectedValue) { return typeof expectedValue === "number"; },
@@ -592,7 +594,7 @@ window.preamble.registerMatcher({
     minArgs: 0,
     maxArgs: 0
 });
-window.preamble.registerMatcher({
+pGlobal.preamble.registerMatcher({
     apiName: "toBeInstanceOf",
     api: function (matcherValue) { return matcherValue; },
     evaluator: function (expectedValue, matcherValue) { return expectedValue instanceof matcherValue; },

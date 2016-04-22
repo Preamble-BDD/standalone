@@ -96,9 +96,7 @@ exports.describe = function (label, callback) {
         _describe.callback();
     }
     catch (error) {
-        console.log(error);
-        alert("Error caught when calling Describe callback. See console for more information");
-        throw new Error("Terminating test!");
+        throw new Error(error.message);
     }
     // pop Describe object off of the callstack
     callstack_1.callStack.popDescribe();
@@ -174,9 +172,7 @@ exports.xdescribe = function (label, callback) {
         _describe.callback();
     }
     catch (error) {
-        console.log(error);
-        alert("Error caught when calling Describe callback. See console for more information");
-        throw new Error("Terminating test!");
+        throw new Error(error.message);
     }
     // pop Describe object off of the callstack
     callstack_1.callStack.popDescribe();
@@ -241,7 +237,6 @@ var CallStack = (function () {
         }
     };
     CallStack.prototype.clear = function () {
-        console.log("callStack._callStack =", this._callStack);
         this._callStack = [];
     };
     Object.defineProperty(CallStack.prototype, "stack", {
@@ -280,12 +275,13 @@ exports.CallStack = CallStack;
 // import {environment} from "../environment/environment";
 var environment_1 = require("../environment/environment");
 require("../../polyfills/Object.assign"); // prevent eliding import
+// TODO(js): clean up configuration - remove shortCircuit, windowGlobals and make uiTestContainerId conditional
 var defaultConfiguration = {
     // windowGlobals: true,
     timeoutInterval: 5000,
     name: "Suite",
     uiTestContainerId: "preamble-ui-container",
-    hidePassedTests: false,
+    hidePassedTests: typeof window !== "undefined" ? false : true,
     shortCircuit: false
 };
 if (environment_1.pGlobal.preambleConfig) {
@@ -311,7 +307,7 @@ else {
     throw new Error("Unsuported Environment");
 }
 exports.pGlobal = preambleGlobal;
-console.log("preambleGlobal", preambleGlobal);
+// console.log("preambleGlobal", preambleGlobal);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],11:[function(require,module,exports){
@@ -1326,7 +1322,6 @@ var QueueRunner = (function () {
                     if (ndx) {
                         // the current context is a result of applying its parent's context values to a blank object
                         hierarchy[ndx].context = Object.assign({}, hierarchy[ndx - 1].context);
-                        console.log("beforeEach context for " + hierarchy[ndx].label, hierarchy[ndx].context);
                     }
                     else {
                         hierarchy[ndx].context = {};
@@ -1368,7 +1363,6 @@ var QueueRunner = (function () {
                     if (ndx) {
                         // the current context is a result of applying its parent's context values to a blank object
                         hierarchy[ndx].context = Object.assign({}, hierarchy[ndx - 1].context);
-                        console.log("afterEach context for " + hierarchy[ndx].label, hierarchy[ndx].context);
                     }
                     else {
                         hierarchy[ndx].context = {};
@@ -1541,7 +1535,7 @@ function queueFilter(queue, queueManagerStats, filter) {
     var result;
     var originalTotItCount = queueManagerStats.totIts;
     var count = 0;
-    if (!filter.length) {
+    if (filter === null || !filter.length) {
         return queue;
     }
     // find the item whose id matches the filter and push it onto the hierarchy
@@ -1623,8 +1617,12 @@ var StackTrace = (function () {
     // TODO(JS): might not want to do this and instead might want to include references to preamble.js or even make it configurable
     StackTrace.prototype.filterstackTrace = function (st) {
         var reFileFromStackTrace = /file:\/\/\/\S+\.js:[0-9]+[:0-9]*/g;
+        var reFileFromStackTraceNode = /\(\S+\.js:[0-9]+[:0-9]*\)/g;
         // Get all file references ...
         var matches = st.match(reFileFromStackTrace);
+        if (!matches) {
+            matches = st.match(reFileFromStackTraceNode);
+        }
         // ... and return an array of file references except those to preamble.js
         return matches.filter(function (el) {
             return el.search(/preamble-ts.js/) === -1;
