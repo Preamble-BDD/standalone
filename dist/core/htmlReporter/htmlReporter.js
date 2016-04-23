@@ -159,6 +159,7 @@ var HtmlReporter = (function () {
             });
         }
     };
+    HtmlReporter.prototype.reportEnd = function () { };
     return HtmlReporter;
 }());
 window["preamble"] = window["preamble"] || {};

@@ -96,6 +96,7 @@ exports.describe = function (label, callback) {
         _describe.callback();
     }
     catch (error) {
+        // TODO(js): this should be reported 
         throw new Error(error.message);
     }
     // pop Describe object off of the callstack
@@ -172,6 +173,7 @@ exports.xdescribe = function (label, callback) {
         _describe.callback();
     }
     catch (error) {
+        // TODO(js): this should be reported 
         throw new Error(error.message);
     }
     // pop Describe object off of the callstack
@@ -1535,7 +1537,7 @@ function queueFilter(queue, queueManagerStats, filter) {
     var result;
     var originalTotItCount = queueManagerStats.totIts;
     var count = 0;
-    if (filter === null || !filter.length) {
+    if (!filter || !filter.length) {
         return queue;
     }
     // find the item whose id matches the filter and push it onto the hierarchy
@@ -1574,13 +1576,11 @@ var ReportDispatch = (function () {
         var _this = this;
         this._reporters.forEach(function (report) { return report.reportSummary(_this._queueManagerStats); });
     };
-    ReportDispatch.prototype.reportSuite = function () {
-    };
     ReportDispatch.prototype.reportSpec = function (it) {
-        // TODO(js): call reportSummary here to also update summary infor - this will require some refactoring because the QueueManager isn't referenced in this module.
         this._reporters.forEach(function (report) { return report.reportSpec(it); });
     };
     ReportDispatch.prototype.reportEnd = function () {
+        this._reporters.forEach(function (report) { return report.reportEnd(); });
     };
     Object.defineProperty(ReportDispatch.prototype, "reporters", {
         set: function (reporters) {
@@ -1782,6 +1782,7 @@ queueManager.run()
     // dispatch reportSummary to all reporters
     reportdispatch_1.reportDispatch.reportSummary();
     // run the queue
+    // TODO(js): should filter for failed specs if hidePassedTests is true
     new QueueRunner_1.QueueRunner(filter && queueFilter_1.queueFilter(QueueManager_1.QueueManager.queue, QueueManager_1.QueueManager.queueManagerStats, filter) || QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, queueManager, reportdispatch_1.reportDispatch, Q).run()
         .then(function () {
         var totFailedIts = QueueManager_1.QueueManager.queue.reduce(function (prev, curr) {
