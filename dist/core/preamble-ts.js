@@ -293,7 +293,7 @@ else {
     exports.configuration = defaultConfiguration;
 }
 // log merged configuration
-console.log("configuration", exports.configuration);
+// console.log("configuration", configuration);
 
 },{"../../polyfills/Object.assign":27,"../environment/environment":10}],10:[function(require,module,exports){
 (function (global){
@@ -514,14 +514,12 @@ exports.registerMatcher = function (matcher) {
                 // set It's and its parent Describe's passed property to false when expectation fails
                 QueueRunner_1.currentIt.passed = !note.result ? note.result : QueueRunner_1.currentIt.passed;
                 QueueRunner_1.currentIt.parent.passed = !note.result ? note.result : QueueRunner_1.currentIt.parent.passed;
-                console.log("note", note);
             }
             else {
-                console.log("note", note);
             }
         };
     };
-    console.log("Registering matcher", matcher.apiName);
+    // console.log("Registering matcher", matcher.apiName);
     expectationAPI[matcher.apiName] = proxy(false);
     if (matcher.negator) {
         negatedExpectationAPI[matcher.apiName] = proxy(true);
@@ -1194,7 +1192,7 @@ var QueueManager = (function () {
         var retryCount = 0;
         var prevCount = 0;
         var intervalId = setInterval(function () {
-            console.log("QueueManager checking queue length stability");
+            // console.log("QueueManager checking queue length stability");
             if (QueueManager.queue.length === prevCount) {
                 retryCount++;
                 if (retryCount > _this.stableRetryCount) {
@@ -1203,7 +1201,7 @@ var QueueManager = (function () {
                         deferred.reject(new Error("Nothing to test!"));
                     }
                     else {
-                        console.log("QueueManager queue stable.");
+                        // console.log("QueueManager queue stable.");
                         deferred.resolve("QueueManager.queue loaded. Count = " + QueueManager.queue.length + ".");
                     }
                 }
@@ -1580,7 +1578,8 @@ var ReportDispatch = (function () {
         this._reporters.forEach(function (report) { return report.reportSpec(it); });
     };
     ReportDispatch.prototype.reportEnd = function () {
-        this._reporters.forEach(function (report) { return report.reportEnd(); });
+        var _this = this;
+        this._reporters.forEach(function (report) { return report.reportEnd(_this._queueManagerStats); });
     };
     Object.defineProperty(ReportDispatch.prototype, "reporters", {
         set: function (reporters) {
@@ -1731,7 +1730,7 @@ if (environment_1.pGlobal.hasOwnProperty("preamble")) {
         reportdispatch_1.reportDispatch.reporters = reporters;
     }
     if (!reporters || !reporters.length) {
-        console.log("No reporters found");
+        // console.log("No reporters found");
         throw new Error("No reporters found");
     }
     // dispatch reportBegin to reporters
@@ -1748,27 +1747,23 @@ if (environment_1.pGlobal.hasOwnProperty("preamble")) {
         var registerMatchers = environment_1.pGlobal.preamble.registerMatchers;
         registerMatchers.forEach(function (rm) { return rm(expect_2.registerMatcher, { deepRecursiveCompare: deeprecursiveequal_1.deepRecursiveCompare }); });
         if (!expect_3.matchersCount()) {
-            console.log("No matchers registered");
+            // console.log("No matchers registered");
             throw new Error("No matchers found");
         }
     }
     else {
-        // no matcher plugins found but matchers can be
-        // registered inline so just log it but don't
-        // throw an exception
-        console.log("No matcher plugins found");
     }
     // expose Q on wondow.preamble
     environment_1.pGlobal.preamble.Q = Q;
 }
 else {
-    console.log("No plugins found");
+    // console.log("No plugins found");
     throw new Error("No plugins found");
 }
 // the raw filter looks like "?filter=spec_n" or "?filter=suite_n" where n is some number
 var filter = typeof window === "object" &&
     window.location.search.substring(window.location.search.indexOf("_") + 1) || null;
-console.log("filter =", filter);
+// console.log("filter =", filter);
 // dspatch reportSummary to all reporters
 reportdispatch_1.reportDispatch.reportSummary();
 // get a queue manager and call its run method to run the test suite
@@ -1777,8 +1772,8 @@ QueueManager_1.QueueManager.startTimer();
 queueManager.run()
     .then(function (msg) {
     // fulfilled/success
-    console.log(msg);
-    console.log("QueueManager.queue =", QueueManager_1.QueueManager.queue);
+    // console.log(msg);
+    // console.log("QueueManager.queue =", QueueManager.queue);
     // dispatch reportSummary to all reporters
     reportdispatch_1.reportDispatch.reportSummary();
     // run the queue
@@ -1789,15 +1784,15 @@ queueManager.run()
             return curr.isA === "It" && !curr.passed ? prev + 1 : prev;
         }, 0);
         QueueManager_1.QueueManager.stopTimer();
-        console.log("queue ran successfully in " + QueueManager_1.QueueManager.queueManagerStats.timeKeeper.totTime + " miliseconds");
-        // dispatch reportSummary to all reporters
+        // console.log(`queue ran successfully in ${QueueManager.queueManagerStats.timeKeeper.totTime} miliseconds`);
         reportdispatch_1.reportDispatch.reportSummary();
+        reportdispatch_1.reportDispatch.reportEnd();
     }, function () {
-        console.log("queue failed to run");
+        // console.log("queue failed to run");
     });
 }, function (msg) {
     // rejected/failure
-    console.log(msg);
+    // console.log(msg);
 });
 
 },{"../package.json":30,"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/mock":13,"./core/expectations/spy/spy":14,"./core/queue/QueueManager":19,"./core/queue/QueueRunner":20,"./core/queue/queueFilter":22,"./core/reporters/reportdispatch":23,"q":29}],27:[function(require,module,exports){

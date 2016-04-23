@@ -159,7 +159,12 @@
         throw new Error("Unsuported Environment");
     }
     var pGlobal = preambleGlobal;
-    pGlobal.preamble = pGlobal.preamble || { registerMatchers: registerMatchers };
+    if (!pGlobal.hasOwnProperty("preamble")) {
+        pGlobal.preamble = { registerMatchers: registerMatchers };
+    }
+    else {
+        pGlobal.preamble.registerMatchers = registerMatchers;
+    }
     registerMatchers.push(register);
 }());
 //# sourceMappingURL=preamble-matchers.js.map
