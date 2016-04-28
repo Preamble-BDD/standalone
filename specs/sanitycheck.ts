@@ -1,7 +1,9 @@
 interface PreambleGlobal {
     preamble: any;
 }
-let preambleGlobal: Window | NodeJS.Global = typeof window === "object" && window || global;
+
+let preambleGlobal;
+preambleGlobal = typeof(window) !== "undefined" ? window : global;
 let pGlobal: PreambleGlobal = <PreambleGlobal>preambleGlobal;
 
 describe(`"describe" is used to describe a suite which can contain one or more specs`, function() {
@@ -124,13 +126,13 @@ describe(`Sharing values between setups, specs and teardowns using "this"`, func
             this.otherValue = 100;
         });
         it(`this.value should equal 10 and this.otherValue should equal 100`, function() {
-            expect(this.value).toEqual(10);
-            expect(this.otherValue).toEqual(100);
+            expect(this.value).toBe(10);
+            expect(this.otherValue).toBe(100);
         });
     });
     it(`this.otherValue should not exist and this.value should equal 10`, function() {
         expect(this.otherValue).toBeUndefined();
-        expect(this.value).toEqual(10);
+        expect(this.value).toBe(10);
     });
 });
 
