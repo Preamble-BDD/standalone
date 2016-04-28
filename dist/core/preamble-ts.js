@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /**
  * Callable API
  * afterEach(function([done]))
@@ -286,33 +286,19 @@ var defaultConfiguration = {
     hidePassedTests: typeof window !== "undefined" ? false : true,
     shortCircuit: false
 };
-if (environment_1.pGlobal.preambleConfig) {
-    exports.configuration = Object.assign({}, defaultConfiguration, environment_1.pGlobal.preambleConfig);
+if (environment_1.pGlobal.preamble && environment_1.pGlobal.preamble.preambleConfig) {
+    exports.configuration = Object.assign({}, defaultConfiguration, environment_1.pGlobal.preamble.preambleConfig);
 }
 else {
     exports.configuration = defaultConfiguration;
 }
-// log merged configuration
-// console.log("configuration", configuration);
 
-},{"../../polyfills/Object.assign":27,"../environment/environment":10}],10:[function(require,module,exports){
-(function (global){
+},{"../../polyfills/Object.assign":26,"../environment/environment":10}],10:[function(require,module,exports){
 "use strict";
-var preambleGlobal;
-if (typeof (window) !== "undefined") {
-    preambleGlobal = window;
-}
-else if (typeof (global) !== "undefined") {
-    preambleGlobal = global;
-}
-else {
-    throw new Error("Unsuported Environment");
-}
+var preambleGlobal = require("@jeffreyschwartz/environment");
 exports.pGlobal = preambleGlobal;
-// console.log("preambleGlobal", preambleGlobal);
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],11:[function(require,module,exports){
+},{"@jeffreyschwartz/environment":27}],11:[function(require,module,exports){
 "use strict";
 exports.deepRecursiveCompare = function (a, b) {
     if (typeof (a) === "object" && typeof (b) === "object") {
@@ -390,6 +376,7 @@ var compareArrays = function (a, b) {
 var spy_1 = require("./spy/spy");
 var QueueRunner_1 = require("../queue/QueueRunner");
 var StackTrace_1 = require("../stacktrace/StackTrace");
+var configuration_1 = require("../configuration/configuration");
 var expectationAPI = {};
 var expectationAPICount = 0;
 var negatedExpectationAPI = {};
@@ -459,11 +446,14 @@ var assignReason = function (note) {
     var reason;
     if (!note.result) {
         if (note.matcherValue != null) {
-            reason = "expect(" + showAs(note.expectedValue) + ")." + note.apiName + "(" + showAs(note.matcherValue) + ") failed!";
+            reason = "expect(" + showAs(note.expectedValue) + ")." + note.apiName + "(" + showAs(note.matcherValue) + ") failed";
         }
         else {
-            reason = "expect(" + showAs(note.expectedValue) + ")." + note.apiName + "() failed!";
+            reason = "expect(" + showAs(note.expectedValue) + ")." + note.apiName + "() failed";
         }
+        console.log("configuration.shortCircuit", configuration_1.configuration.shortCircuit);
+        reason = configuration_1.configuration.shortCircuit ? reason + " and testing has been short circuited" : reason;
+        reason += "!";
         QueueRunner_1.currentIt.reasons.push({ reason: reason, stackTrace: note.stackTrace });
     }
 };
@@ -528,7 +518,7 @@ exports.registerMatcher = function (matcher) {
 };
 exports.matchersCount = function () { return expectationAPICount; };
 
-},{"../queue/QueueRunner":20,"../stacktrace/StackTrace":24,"./spy/spy":14}],13:[function(require,module,exports){
+},{"../configuration/configuration":9,"../queue/QueueRunner":20,"../stacktrace/StackTrace":24,"./spy/spy":14}],13:[function(require,module,exports){
 /**
  * Mock API
  * WARNING: mock is an experimental api and may not be included in the official release.
@@ -1254,17 +1244,21 @@ var QueueManager = (function () {
 exports.QueueManager = QueueManager;
 
 },{}],20:[function(require,module,exports){
+// TODO(js): Feature - implement shourt circuit.
+// TODO(js): Bug - timeouts shouldn't reject their promise.
 "use strict";
 var QueueManager_1 = require("./QueueManager");
 require("../../polyfills/Object.assign"); // prevent eliding import
 // TODO(JS): Show .fails (i.e. timeouts) in the done???
 var QueueRunner = (function () {
-    function QueueRunner(queue, configTimeoutInterval, queueManager, reportDispatch, Q) {
+    function QueueRunner(queue, configTimeoutInterval, configShortCircuit, queueManager, reportDispatch, Q) {
         this.queue = queue;
         this.configTimeoutInterval = configTimeoutInterval;
+        this.configShortCircuit = configShortCircuit;
         this.queueManager = queueManager;
         this.reportDispatch = reportDispatch;
         this.Q = Q;
+        this.isShortCircuited = false;
     }
     /**
      * Returns a function (closure) which must complete within a set amount of time
@@ -1276,6 +1270,7 @@ var QueueRunner = (function () {
      * beforeEach(function(done) {...}, 1);
      */
     QueueRunner.prototype.runBeforeItAfter = function (fn, context, timeoutInterval) {
+        var _this = this;
         var deferred = this.Q.defer();
         setTimeout(function () {
             var resolve = function () {
@@ -1298,9 +1293,13 @@ var QueueRunner = (function () {
             }
             // a timer that expires after timeoutInterval miliseconds
             setTimeout(function () {
+                var errorMsg = "timed out after " + timeoutInterval + "ms";
+                if (_this.isShortCircuited) {
+                    errorMsg += " and testing has been short circuited";
+                }
                 if (deferred.promise.isPending()) {
                     // timedOut = true;
-                    deferred.reject(new Error("timed out after " + timeoutInterval + "ms"));
+                    deferred.reject(new Error(errorMsg));
                 }
             }, timeoutInterval);
         }, 1);
@@ -1412,6 +1411,9 @@ var QueueRunner = (function () {
     QueueRunner.prototype.runBIA = function (it) {
         var _this = this;
         var deferred = this.Q.defer();
+        var shortCircuitMessage = function (message) {
+            return _this.configShortCircuit && message + " and testing has been short circuited!" || message;
+        };
         setTimeout(function () {
             exports.currentIt = it;
             _this.runBefores(it.hierarchy).then(function () {
@@ -1419,17 +1421,26 @@ var QueueRunner = (function () {
                     _this.runAfters(it.hierarchy).then(function () {
                         deferred.resolve();
                     }, function (error) {
-                        it.reasons.push({ reason: error.message, stackTrace: it.parent.afterEach.callStack });
+                        it.reasons.push({
+                            reason: shortCircuitMessage(error.message),
+                            stackTrace: it.parent.afterEach.callStack
+                        });
                         it.passed = false;
                         deferred.reject(error);
                     });
                 }, function (error) {
-                    it.reasons.push({ reason: error.message, stackTrace: it.callStack });
+                    it.reasons.push({
+                        reason: shortCircuitMessage(error.message),
+                        stackTrace: it.callStack
+                    });
                     it.passed = false;
                     deferred.reject(error);
                 });
             }, function (error) {
-                it.reasons.push({ reason: error.message, stackTrace: it.parent.beforeEach.callStack });
+                it.reasons.push({
+                    reason: shortCircuitMessage(error.message),
+                    stackTrace: it.parent.beforeEach.callStack
+                });
                 it.passed = false;
                 deferred.reject(error);
             });
@@ -1449,7 +1460,7 @@ var QueueRunner = (function () {
         // recursive iterator
         var runner = function (i) {
             setTimeout(function () {
-                if (i < its.length) {
+                if (!_this.isShortCircuited && i < its.length) {
                     it = its[i];
                     // TODO(js): is parent.excluded check really needed????
                     if (it.excluded || it.parent.excluded) {
@@ -1460,14 +1471,21 @@ var QueueRunner = (function () {
                         _this.runBIA(it).then(function () {
                             if (!it.passed) {
                                 QueueManager_1.QueueManager.bumpTotFailedItsCount();
+                                if (_this.configShortCircuit) {
+                                    _this.isShortCircuited = true;
+                                }
                             }
                             _this.reportDispatch.reportSummary();
                             _this.reportDispatch.reportSpec(it);
                             runner(++i);
                         }).fail(function () {
                             // an it timed out or one or more expectations failed
+                            QueueManager_1.QueueManager.bumpTotFailedItsCount();
                             _this.reportDispatch.reportSummary();
                             _this.reportDispatch.reportSpec(it);
+                            if (_this.configShortCircuit) {
+                                _this.isShortCircuited = true;
+                            }
                             runner(++i);
                         });
                     }
@@ -1486,7 +1504,7 @@ var QueueRunner = (function () {
 }());
 exports.QueueRunner = QueueRunner;
 
-},{"../../polyfills/Object.assign":27,"./QueueManager":19}],21:[function(require,module,exports){
+},{"../../polyfills/Object.assign":26,"./QueueManager":19}],21:[function(require,module,exports){
 "use strict";
 function ancestorHierarchy(item) {
     var parent = item;
@@ -1681,121 +1699,6 @@ var UniqueNumber = (function () {
 exports.UniqueNumber = UniqueNumber;
 
 },{}],26:[function(require,module,exports){
-/**
- * Main entry point module
- */
-"use strict";
-var Q = require("q");
-var QueueManager_1 = require("./core/queue/QueueManager");
-var QueueRunner_1 = require("./core/queue/QueueRunner");
-var describe_1 = require("./core/api/describe");
-var xdescribe_1 = require("./core/api/xdescribe");
-var it_1 = require("./core/api/it");
-var xit_1 = require("./core/api/xit");
-var beforeEach_1 = require("./core/api/beforeEach");
-var afterEach_1 = require("./core/api/afterEach");
-var environment_1 = require("./core/environment/environment");
-var configuration_1 = require("./core/configuration/configuration");
-var expect_1 = require("./core/expectations/expect");
-var expect_2 = require("./core/expectations/expect");
-var spy_1 = require("./core/expectations/spy/spy");
-var spy_2 = require("./core/expectations/spy/spy");
-var mock_1 = require("./core/expectations/mock");
-var deeprecursiveequal_1 = require("./core/expectations/comparators/deeprecursiveequal");
-var expect_3 = require("./core/expectations/expect");
-var reportdispatch_1 = require("./core/reporters/reportdispatch");
-var queueFilter_1 = require("./core/queue/queueFilter");
-var pkgJSON = require("../package.json");
-var reporters;
-// turn on long stact support in Q
-Q.longStackSupport = true;
-// give reportDispatch access to the queuManager
-reportdispatch_1.reportDispatch.queueManagerStats = QueueManager_1.QueueManager.queueManagerStats;
-// add APIs used by suites to the global object
-environment_1.pGlobal.describe = describe_1.describe;
-environment_1.pGlobal.xdescribe = xdescribe_1.xdescribe;
-environment_1.pGlobal.it = it_1.it;
-environment_1.pGlobal.xit = xit_1.xit;
-environment_1.pGlobal.beforeEach = beforeEach_1.beforeEach;
-environment_1.pGlobal.afterEach = afterEach_1.afterEach;
-environment_1.pGlobal.expect = expect_1.expect;
-environment_1.pGlobal.spyOn = spy_1.spyOn;
-environment_1.pGlobal.spyOnN = spy_2.spyOnN;
-environment_1.pGlobal.mock = mock_1.mock;
-if (environment_1.pGlobal.hasOwnProperty("preamble")) {
-    // add reporter plugin
-    if (environment_1.pGlobal.preamble.hasOwnProperty("reporters")) {
-        reporters = environment_1.pGlobal.preamble.reporters;
-        // hand off reporters to the ReportDispatch
-        reportdispatch_1.reportDispatch.reporters = reporters;
-    }
-    if (!reporters || !reporters.length) {
-        // console.log("No reporters found");
-        throw new Error("No reporters found");
-    }
-    // dispatch reportBegin to reporters
-    reportdispatch_1.reportDispatch.reportBegin({
-        version: pkgJSON.version,
-        uiTestContainerId: configuration_1.configuration.uiTestContainerId,
-        name: configuration_1.configuration.name,
-        hidePassedTests: configuration_1.configuration.hidePassedTests
-    });
-    // expose registerMatcher for one-off in-line matcher registration
-    environment_1.pGlobal.preamble.registerMatcher = expect_2.registerMatcher;
-    // call each matcher plugin to register their matchers
-    if (environment_1.pGlobal.preamble.hasOwnProperty("registerMatchers")) {
-        var registerMatchers = environment_1.pGlobal.preamble.registerMatchers;
-        registerMatchers.forEach(function (rm) { return rm(expect_2.registerMatcher, { deepRecursiveCompare: deeprecursiveequal_1.deepRecursiveCompare }); });
-        if (!expect_3.matchersCount()) {
-            // console.log("No matchers registered");
-            throw new Error("No matchers found");
-        }
-    }
-    else {
-    }
-    // expose Q on wondow.preamble
-    environment_1.pGlobal.preamble.Q = Q;
-}
-else {
-    // console.log("No plugins found");
-    throw new Error("No plugins found");
-}
-// the raw filter looks like "?filter=spec_n" or "?filter=suite_n" where n is some number
-var filter = typeof window === "object" &&
-    window.location.search.substring(window.location.search.indexOf("_") + 1) || null;
-// console.log("filter =", filter);
-// dspatch reportSummary to all reporters
-reportdispatch_1.reportDispatch.reportSummary();
-// get a queue manager and call its run method to run the test suite
-var queueManager = new QueueManager_1.QueueManager(100, 2, Q);
-QueueManager_1.QueueManager.startTimer();
-queueManager.run()
-    .then(function (msg) {
-    // fulfilled/success
-    // console.log(msg);
-    // console.log("QueueManager.queue =", QueueManager.queue);
-    // dispatch reportSummary to all reporters
-    reportdispatch_1.reportDispatch.reportSummary();
-    // run the queue
-    // TODO(js): should filter for failed specs if hidePassedTests is true
-    new QueueRunner_1.QueueRunner(filter && queueFilter_1.queueFilter(QueueManager_1.QueueManager.queue, QueueManager_1.QueueManager.queueManagerStats, filter) || QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, queueManager, reportdispatch_1.reportDispatch, Q).run()
-        .then(function () {
-        var totFailedIts = QueueManager_1.QueueManager.queue.reduce(function (prev, curr) {
-            return curr.isA === "It" && !curr.passed ? prev + 1 : prev;
-        }, 0);
-        QueueManager_1.QueueManager.stopTimer();
-        // console.log(`queue ran successfully in ${QueueManager.queueManagerStats.timeKeeper.totTime} miliseconds`);
-        reportdispatch_1.reportDispatch.reportSummary();
-        reportdispatch_1.reportDispatch.reportEnd();
-    }, function () {
-        // console.log("queue failed to run");
-    });
-}, function (msg) {
-    // rejected/failure
-    // console.log(msg);
-});
-
-},{"../package.json":30,"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/mock":13,"./core/expectations/spy/spy":14,"./core/queue/QueueManager":19,"./core/queue/QueueRunner":20,"./core/queue/queueFilter":22,"./core/reporters/reportdispatch":23,"q":29}],27:[function(require,module,exports){
 if (typeof Object.assign !== "function") {
     (function () {
         Object.assign = function (target) {
@@ -1819,6 +1722,15 @@ if (typeof Object.assign !== "function") {
     })();
 }
 
+},{}],27:[function(require,module,exports){
+(function (global){
+"use strict";
+var throwError = function () {
+    throw new Error("Unsuported Environment");
+};
+module.exports = typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : throwError();
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],28:[function(require,module,exports){
 // shim for using process in browser
 
@@ -3966,16 +3878,18 @@ return Q;
 }).call(this,require('_process'))
 },{"_process":28}],30:[function(require,module,exports){
 module.exports={
-  "name": "preamble-ts",
-  "version": "0.2.1",
-  "description": "Preamble.ts the BDD test runner Reborn! Now written using TypeScript",
+  "name": "@preamble/preamble-ts-core",
+  "version": "0.2.3",
+  "description": "An environment neutral JavaScript BDD testing framework written in TypeScript which supports writing test suites in TypeScript.",
   "main": "dist/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Jeffrey Schwartz",
+  "author": "Jeffrey Schwartz <preamble.ts@gmail.com> (https://github.com/Preamble-BDD/standalone)",
   "license": "MIT",
+  "repository": "https://github.com/Preamble-BDD/preamble.ts.core.git",
   "dependencies": {
+    "@jeffreyschwartz/environment": "0.0.3",
     "q": "^1.4.1"
   },
   "devDependencies": {
@@ -3985,4 +3899,126 @@ module.exports={
   }
 }
 
-},{}]},{},[26]);
+},{}],"main":[function(require,module,exports){
+/**
+ * Main entry point module
+ */
+"use strict";
+var Q = require("q");
+var QueueManager_1 = require("./core/queue/QueueManager");
+var QueueRunner_1 = require("./core/queue/QueueRunner");
+var describe_1 = require("./core/api/describe");
+var xdescribe_1 = require("./core/api/xdescribe");
+var it_1 = require("./core/api/it");
+var xit_1 = require("./core/api/xit");
+var beforeEach_1 = require("./core/api/beforeEach");
+var afterEach_1 = require("./core/api/afterEach");
+var environment_1 = require("./core/environment/environment");
+var configuration_1 = require("./core/configuration/configuration");
+var expect_1 = require("./core/expectations/expect");
+var expect_2 = require("./core/expectations/expect");
+var spy_1 = require("./core/expectations/spy/spy");
+var spy_2 = require("./core/expectations/spy/spy");
+var mock_1 = require("./core/expectations/mock");
+var deeprecursiveequal_1 = require("./core/expectations/comparators/deeprecursiveequal");
+var expect_3 = require("./core/expectations/expect");
+var reportdispatch_1 = require("./core/reporters/reportdispatch");
+var queueFilter_1 = require("./core/queue/queueFilter");
+var pkgJSON = require("../package.json");
+module.exports = function () {
+    var reporters;
+    // turn on long stact support in Q
+    Q.longStackSupport = true;
+    // give reportDispatch access to the queuManager
+    reportdispatch_1.reportDispatch.queueManagerStats = QueueManager_1.QueueManager.queueManagerStats;
+    // add APIs used by suites to the global object
+    environment_1.pGlobal.describe = describe_1.describe;
+    environment_1.pGlobal.xdescribe = xdescribe_1.xdescribe;
+    environment_1.pGlobal.it = it_1.it;
+    environment_1.pGlobal.xit = xit_1.xit;
+    environment_1.pGlobal.beforeEach = beforeEach_1.beforeEach;
+    environment_1.pGlobal.afterEach = afterEach_1.afterEach;
+    environment_1.pGlobal.expect = expect_1.expect;
+    environment_1.pGlobal.spyOn = spy_1.spyOn;
+    environment_1.pGlobal.spyOnN = spy_2.spyOnN;
+    environment_1.pGlobal.mock = mock_1.mock;
+    if (environment_1.pGlobal.hasOwnProperty("preamble")) {
+        // add reporter plugin
+        if (environment_1.pGlobal.preamble.hasOwnProperty("reporters")) {
+            reporters = environment_1.pGlobal.preamble.reporters;
+            // hand off reporters to the ReportDispatch
+            reportdispatch_1.reportDispatch.reporters = reporters;
+        }
+        if (!reporters || !reporters.length) {
+            // console.log("No reporters found");
+            throw new Error("No reporters found");
+        }
+        // dispatch reportBegin to reporters
+        reportdispatch_1.reportDispatch.reportBegin({
+            version: pkgJSON.version,
+            uiTestContainerId: configuration_1.configuration.uiTestContainerId,
+            name: configuration_1.configuration.name,
+            hidePassedTests: configuration_1.configuration.hidePassedTests
+        });
+        // expose registerMatcher for one-off in-line matcher registration
+        environment_1.pGlobal.preamble.registerMatcher = expect_2.registerMatcher;
+        // call each matcher plugin to register their matchers
+        if (environment_1.pGlobal.preamble.hasOwnProperty("registerMatchers")) {
+            var registerMatchers = environment_1.pGlobal.preamble.registerMatchers;
+            registerMatchers.forEach(function (rm) { return rm(expect_2.registerMatcher, { deepRecursiveCompare: deeprecursiveequal_1.deepRecursiveCompare }); });
+            if (!expect_3.matchersCount()) {
+                // console.log("No matchers registered");
+                throw new Error("No matchers found");
+            }
+        }
+        else {
+            // no matcher plugins found but matchers can be
+            // registered inline so just log it but don't
+            // throw an exception
+            console.log("No matcher plugins found");
+        }
+        // expose Q on wondow.preamble
+        environment_1.pGlobal.preamble.Q = Q;
+    }
+    else {
+        // console.log("No plugins found");
+        throw new Error("No plugins found");
+    }
+    // the raw filter looks like "?filter=spec_n" or "?filter=suite_n" where n is some number
+    var filter = typeof window === "object" &&
+        window.location.search.substring(window.location.search.indexOf("_") + 1) || null;
+    // console.log("filter =", filter);
+    // dspatch reportSummary to all reporters
+    reportdispatch_1.reportDispatch.reportSummary();
+    // get a queue manager and call its run method to run the test suite
+    var queueManager = new QueueManager_1.QueueManager(100, 2, Q);
+    QueueManager_1.QueueManager.startTimer();
+    queueManager.run()
+        .then(function (msg) {
+        // fulfilled/success
+        // console.log(msg);
+        // console.log("QueueManager.queue =", QueueManager.queue);
+        // dispatch reportSummary to all reporters
+        reportdispatch_1.reportDispatch.reportSummary();
+        // run the queue
+        // TODO(js): should filter for failed specs if hidePassedTests is true
+        new QueueRunner_1.QueueRunner(filter && queueFilter_1.queueFilter(QueueManager_1.QueueManager.queue, QueueManager_1.QueueManager.queueManagerStats, filter) || QueueManager_1.QueueManager.queue, configuration_1.configuration.timeoutInterval, configuration_1.configuration.shortCircuit, queueManager, reportdispatch_1.reportDispatch, Q).run()
+            .then(function () {
+            var totFailedIts = QueueManager_1.QueueManager.queue.reduce(function (prev, curr) {
+                return curr.isA === "It" && !curr.passed ? prev + 1 : prev;
+            }, 0);
+            QueueManager_1.QueueManager.stopTimer();
+            // console.log(`queue ran successfully in ${QueueManager.queueManagerStats.timeKeeper.totTime} miliseconds`);
+            reportdispatch_1.reportDispatch.reportSummary();
+            reportdispatch_1.reportDispatch.reportEnd();
+        }, function () {
+            // console.log("queue failed to run");
+            console.log("queue failed to run");
+        });
+    }, function (msg) {
+        // rejected/failure
+        // console.log(msg);
+    });
+};
+
+},{"../package.json":30,"./core/api/afterEach":1,"./core/api/beforeEach":2,"./core/api/describe":4,"./core/api/it":5,"./core/api/xdescribe":6,"./core/api/xit":7,"./core/configuration/configuration":9,"./core/environment/environment":10,"./core/expectations/comparators/deeprecursiveequal":11,"./core/expectations/expect":12,"./core/expectations/mock":13,"./core/expectations/spy/spy":14,"./core/queue/QueueManager":19,"./core/queue/QueueRunner":20,"./core/queue/queueFilter":22,"./core/reporters/reportdispatch":23,"q":29}]},{},["main"]);

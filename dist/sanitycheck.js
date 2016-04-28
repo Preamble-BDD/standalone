@@ -1,4 +1,5 @@
-var preambleGlobal = typeof window === "object" && window || global;
+var preambleGlobal;
+preambleGlobal = typeof (window) !== "undefined" ? window : global;
 var pGlobal = preambleGlobal;
 describe("\"describe\" is used to describe a suite which can contain one or more specs", function () {
     it("and \"it\" is used to describe a spec and is used to group one or more expectations\"", function () {
@@ -110,13 +111,13 @@ describe("Sharing values between setups, specs and teardowns using \"this\"", fu
             this.otherValue = 100;
         });
         it("this.value should equal 10 and this.otherValue should equal 100", function () {
-            expect(this.value).toEqual(10);
-            expect(this.otherValue).toEqual(100);
+            expect(this.value).toBe(10);
+            expect(this.otherValue).toBe(100);
         });
     });
     it("this.otherValue should not exist and this.value should equal 10", function () {
         expect(this.otherValue).toBeUndefined();
-        expect(this.value).toEqual(10);
+        expect(this.value).toBe(10);
     });
 });
 describe("Prevent a suite from running by excluding it with xdescribe", function () {
