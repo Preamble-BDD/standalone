@@ -12,5 +12,5 @@ preambleGlobal.preamble.preambleConfig = {
     name: "Sanity Check",
     uiTestContainerId: "ui-test-container",
     hidePassedTests: false,
-    shortCircuit: true
+    shortCircuit: false
 };
