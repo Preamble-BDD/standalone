@@ -1,4 +1,10 @@
-"use strict";
+interface PreambleGlobal {
+    preamble: any;
+}
+
+let preambleGlobal;
+preambleGlobal = typeof(window) !== "undefined" ? window : global;
+let pGlobal: PreambleGlobal = <PreambleGlobal>preambleGlobal;
 
 describe(`"describe" is used to describe a suite which can contain one or more specs`, function() {
     it(`and "it" is used to describe a spec and is used to group one or more expectations"`, function() {
@@ -120,13 +126,13 @@ describe(`Sharing values between setups, specs and teardowns using "this"`, func
             this.otherValue = 100;
         });
         it(`this.value should equal 10 and this.otherValue should equal 100`, function() {
-            expect(this.value).toEqual(10);
-            expect(this.otherValue).toEqual(100);
+            expect(this.value).toBe(10);
+            expect(this.otherValue).toBe(100);
         });
     });
     it(`this.otherValue should not exist and this.value should equal 10`, function() {
         expect(this.otherValue).toBeUndefined();
-        expect(this.value).toEqual(10);
+        expect(this.value).toBe(10);
     });
 });
 
@@ -622,7 +628,7 @@ describe(`Calling and.callFake(fn)`, function() {
 // Q is exposed on the preamble object
 describe(`Q is exposed in the global preamble object for use in suites`, function() {
     beforeEach(function(done) {
-        window.preamble.Q.delay(150).then(() => {
+        pGlobal.preamble.Q.delay(150).then(() => {
             this.abc = "abc";
             done();
         });
@@ -634,7 +640,7 @@ describe(`Q is exposed in the global preamble object for use in suites`, functio
 });
 
 // custom matchers
-window.preamble.registerMatcher({
+pGlobal.preamble.registerMatcher({
     apiName: "toBeAString",
     api: (matcherValue: any): void => { },
     evaluator: (expectedValue): boolean => typeof expectedValue === "string",
@@ -642,7 +648,7 @@ window.preamble.registerMatcher({
     minArgs: 0,
     maxArgs: 0
 });
-window.preamble.registerMatcher({
+pGlobal.preamble.registerMatcher({
     apiName: "toBeANumber",
     api: (matcherValue: any): void => { },
     evaluator: (expectedValue): boolean => typeof expectedValue === "number",
@@ -650,7 +656,7 @@ window.preamble.registerMatcher({
     minArgs: 0,
     maxArgs: 0
 });
-window.preamble.registerMatcher({
+pGlobal.preamble.registerMatcher({
     apiName: "toBeInstanceOf",
     api: (matcherValue: any): any => matcherValue,
     evaluator: (expectedValue, matcherValue): boolean => expectedValue instanceof matcherValue,

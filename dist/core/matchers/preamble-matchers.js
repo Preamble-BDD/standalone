@@ -147,19 +147,24 @@
             minArgs: 1,
             maxArgs: 1
         });
-        registerMatcher({
-            apiName: "toHaveThrownWithName",
-            api: function (matcherValue) { return matcherValue; },
-            evaluator: function (expectedValue, matcherValue) {
-                return expectedValue.calls.threwWithName(matcherValue);
-            },
-            negator: true,
-            minArgs: 1,
-            maxArgs: 1
-        });
     };
-    window["preamble"] = window["preamble"] || {};
-    window["preamble"]["registerMatchers"] = window["preamble"]["registerMatchers"] || registerMatchers;
+    var preambleGlobal;
+    if (typeof (window) !== "undefined") {
+        preambleGlobal = window;
+    }
+    else if (typeof (global) !== "undefined") {
+        preambleGlobal = global;
+    }
+    else {
+        throw new Error("Unsuported Environment");
+    }
+    var pGlobal = preambleGlobal;
+    if (!pGlobal.hasOwnProperty("preamble")) {
+        pGlobal.preamble = { registerMatchers: registerMatchers };
+    }
+    else {
+        pGlobal.preamble.registerMatchers = registerMatchers;
+    }
     registerMatchers.push(register);
 }());
 //# sourceMappingURL=preamble-matchers.js.map
