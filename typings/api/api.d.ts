@@ -6,19 +6,28 @@ declare interface IMatcher {
     minArgs: number;
     maxArgs: number;
 }
+
 declare interface Window {
     preamble: {
         registerMatcher(matcher: IMatcher): void;
         Q: typeof Q;
     };
 }
+
 declare function registerMatcher(matcher: IMatcher): void;
+
 declare function describe(label: string, callback: () => void): void;
+
 declare function xdescribe(label: string, callback: () => void): void;
+
 declare function it(label: string, callback: (done?: () => void) => void, timeoutInterval?: number): void;
+
 declare function xit(label: string, callback: (done?: () => void) => void, timeoutInterval?: number): void;
+
 declare function beforeEach(callback: (done?: () => void) => void, timeoutInterval?: number);
+
 declare function afterEach(callback: (done?: () => void) => void, timeoutInterval?: number);
+
 declare function expect(ev: any): {
     toBe(matcherValue: any): any;
     toEqual(matcherValue: any): any;
@@ -61,10 +70,13 @@ declare function expect(ev: any): {
         toBeInstanceOf(matcherValue: any): any;
     }
 };
+
 declare function spyOn(...args): Spy;
+
 declare interface StaticSpy {
     (...args): any;
 }
+
 declare interface And {
     reset: () => Spy;
     callWithContext: (context: {}) => Spy;
@@ -76,6 +88,7 @@ declare interface And {
     callActual: () => Spy;
     callStub: () => Spy;
 }
+
 declare interface Calls {
     count: () => number;
     forCall: (i: number) => ACall;
@@ -87,6 +100,7 @@ declare interface Calls {
     threwWithName: (name: string) => boolean;
     threwWithMessage: (message: string) => boolean;
 }
+
 declare interface Spy extends StaticSpy {
     _spyMaker: string;
     _returns: any;
@@ -102,6 +116,7 @@ declare interface Spy extends StaticSpy {
     validate: () => void;
     _resetCalls: () => void;
 }
+
 declare interface SpyOnStatic {
     (...args): Spy;
 }
@@ -118,6 +133,7 @@ declare class Args {
     hasArgProperty: (i: number, propertyName: string) => boolean;
     getArgProperty: (i: number, propertyName: string) => string;
 }
+
 declare class ACall {
     constructor(context: {}, args: Args, error: Error, returned: any);
     getContext: () => {};
@@ -130,8 +146,11 @@ declare class ACall {
     getError: () => Error;
     getReturned: () => any;
 }
+
 declare function mock(...args): Mock;
+
 declare function validate(): void;
+
 declare interface MockStatic {
     (...args: any[]): Mock;
 }
