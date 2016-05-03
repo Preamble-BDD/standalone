@@ -1,3 +1,4 @@
+"use strict";
 describe("\"describe\" is used to describe a suite which can contain one or more specs", function () {
     it("and \"it\" is used to describe a spec and is used to group one or more expectations\"", function () {
         expect(true).toBeTrue();
@@ -300,7 +301,7 @@ describe("Calling calls.all()", function () {
         expect(someFn.calls.all().length).toEqual(1);
     });
 });
-describe("Calling calls.wasCalledWith(...args)", function () {
+describe("Calling calls.wasCalledWith(...args: any[])", function () {
     it("returns true if the spy was called with args and false if it was not called with args", function () {
         var someFn = spyOn();
         someFn(123, "abc", { zip: 55555 });
@@ -411,7 +412,12 @@ describe("Calling calls.forCall(i).getArgsLength()", function () {
 describe("Calling calls.forCall(i).getProperty(nth, propertyName)", function () {
     it("works like arguments[nth][propertyName] for a specific call to the spy", function () {
         var someObject = {
-            someFn: function (name) { }
+            someFn: function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i - 0] = arguments[_i];
+                }
+            }
         };
         var spy = spyOn(someObject, "someFn");
         someObject.someFn({ fName: "Abraham", lName: "Lincoln" });
@@ -422,7 +428,12 @@ describe("Calling calls.forCall(i).getProperty(nth, propertyName)", function () 
 describe("Calling calls.forCall(i).hasArgProperty(nth, propertyName)", function () {
     it("works like propertyName in arguments[nth] for a specific call to the _spy_", function () {
         var someObject = {
-            someFn: function (name) { }
+            someFn: function () {
+                var args = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    args[_i - 0] = arguments[_i];
+                }
+            }
         };
         var spy = spyOn(someObject, "someFn");
         someObject.someFn({ fName: "Abraham", lName: "Lincoln" });
@@ -566,7 +577,7 @@ describe("Calling and.callFake(fn)", function () {
 describe("Q is exposed in the global preamble object for use in suites", function () {
     beforeEach(function (done) {
         var _this = this;
-        window.preamble.Q.delay(150).then(function () {
+        preamble.Q.delay(150).then(function () {
             _this.abc = "abc";
             done();
         });
@@ -576,7 +587,7 @@ describe("Q is exposed in the global preamble object for use in suites", functio
         expect(this.abc).not.toBe("cba");
     });
 });
-window.preamble.registerMatcher({
+preamble.registerMatcher({
     apiName: "toBeAString",
     api: function (matcherValue) { },
     evaluator: function (expectedValue) { return typeof expectedValue === "string"; },
@@ -584,7 +595,7 @@ window.preamble.registerMatcher({
     minArgs: 0,
     maxArgs: 0
 });
-window.preamble.registerMatcher({
+preamble.registerMatcher({
     apiName: "toBeANumber",
     api: function (matcherValue) { },
     evaluator: function (expectedValue) { return typeof expectedValue === "number"; },
@@ -592,7 +603,7 @@ window.preamble.registerMatcher({
     minArgs: 0,
     maxArgs: 0
 });
-window.preamble.registerMatcher({
+preamble.registerMatcher({
     apiName: "toBeInstanceOf",
     api: function (matcherValue) { return matcherValue; },
     evaluator: function (expectedValue, matcherValue) { return expectedValue instanceof matcherValue; },
