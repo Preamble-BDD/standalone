@@ -1,3 +1,5 @@
+/// <reference path="../dist/preamble-bdd-api.d.ts" />
+
 "use strict";
 
 describe(`"describe" is used to describe a suite which can contain one or more specs`, function() {
